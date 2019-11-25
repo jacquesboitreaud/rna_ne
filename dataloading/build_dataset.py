@@ -39,7 +39,7 @@ LOCAL=False #server or local
 if(LOCAL):
     gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
     savedir = "C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data"
-    pdb_dir = "C:/Users/jacqu/Documents/databases/rcsb_pdb"
+    pdb_dir = "C:/Users/jacqu/Documents/databases/rcsb_pdb/rcsb_pdb"
 else:
     gr_dir="../../data/RNA_Graphs"
     savedir = '../../data/DeepFRED_data'
