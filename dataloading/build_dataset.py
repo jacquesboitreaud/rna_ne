@@ -92,7 +92,7 @@ if(__name__=='__main__'):
                     
                     #TODO: run RNA-align and compute tmscore
                     ######
-                    subprocess.call(["RNA-align", "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"])
+                    subprocess.call(["/home/mcb/users/jboitr/RNAalign/RNAalign", "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"])
                     tmscore = 1 
                     
     
