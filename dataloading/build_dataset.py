@@ -33,15 +33,17 @@ if __name__ == "__main__":
 from pdb_utils import *
 from utils import *
 
-LOCAL=False #server or local
+LOCAL=True #server or local
 
 # Paths
 if(LOCAL):
     gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
     savedir = "C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data"
+    pdb_dir = "C:/Users/jacqu/Documents/databases/rcsb_pdb"
 else:
     gr_dir="../../data/RNA_Graphs"
     savedir = '../../data/DeepFRED_data'
+    pdb_dir = '../../data/rcsb_pdb'
 
 if(__name__=='__main__'):
     
@@ -70,7 +72,8 @@ if(__name__=='__main__'):
             nodepair_counter=0
             
             # Load PDB file 
-            structure = read_pdb(pdbid)
+            pdbpath = os.path.join(pdb_dir,f'{pdbid}.cif',f'{pdbid}.cif')
+            structure = read_pdb(pdbid, pdbpath)
             IO_writer.set_structure(structure)
             
             

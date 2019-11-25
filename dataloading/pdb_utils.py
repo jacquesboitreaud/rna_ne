@@ -16,14 +16,12 @@ from Bio.PDB.PDBIO import Select
 import numpy as np
 
 
-def read_pdb(pdb_id):
+def read_pdb(pdb_id, path):
     """ 
     describe inputs and outputs
     """
     parser = MMCIFParser()
-    structure_id=pdb_id
-    filename = f'C:/Users/jacqu/Documents/databases/rcsb_pdb/{structure_id}.cif/{structure_id}.cif'
-    struc= parser.get_structure(structure_id, filename)
+    struc= parser.get_structure(pdb_id, path)
     """
     residues = []
     for residue in struc.get_residues():

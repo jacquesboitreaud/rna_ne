@@ -34,11 +34,6 @@ def knbrs(G, start, k):
         nbrs = set((nbr for n in nbrs for nbr in G[n]))
     return nbrs
 
-def writePDB():
-    io = PDBIO()
-    io.set_structure(s)
-    io.save('out.pdb')
-
 
 
 
