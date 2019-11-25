@@ -43,7 +43,7 @@ if(LOCAL):
 else:
     gr_dir="../../data/RNA_Graphs"
     savedir = '../../data/DeepFRED_data'
-    pdb_dir = '../../data/rcsb_pdb/rcsb_pdb'
+    pdb_dir = '../../data/rcsb_pdb'
 
 if(__name__=='__main__'):
     
