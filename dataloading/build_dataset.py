@@ -33,9 +33,8 @@ if __name__ == "__main__":
 from pdb_utils import *
 from utils import *
 
-# Hyperparams 
+# Paths
 gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
-annot_dir = "C:/Users/jacqu/Documents/GitHub/data/annotated"
 savedir = "C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data"
 
 if(__name__=='__main__'):
@@ -90,9 +89,13 @@ if(__name__=='__main__'):
                     IO_writer.save('../tmp/pdb_a.pdb', selectResidues(pdb_a))
                     IO_writer.save('../tmp/pdb_b.pdb', selectResidues(pdb_b))
                     
-                    #TODO: run RNA-align and compute tmscore
-                    ######
-                    subprocess.call(["/home/mcb/users/jboitr/RNAalign/RNAalign", "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"])
+                    #TODO: run RNA-align and compute tmscore            
+                    
+                    #TODO: get the output tmscore
+                    with open("tmp/align.out", "w") as rnaout:
+                        p = subprocess.run(["/home/mcb/users/jboitr/RNAalign/RNAalign", 
+                                            "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"], stdout=rnaout)
+                    
                     tmscore = 1 
                     
     
