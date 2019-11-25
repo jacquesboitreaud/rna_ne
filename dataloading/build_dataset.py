@@ -33,7 +33,7 @@ if __name__ == "__main__":
 from pdb_utils import *
 from utils import *
 
-LOCAL=True #server or local
+LOCAL=False #server or local
 
 # Paths
 if(LOCAL):
