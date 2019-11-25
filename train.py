@@ -13,9 +13,7 @@ Trains model on node pairs, under simLoss
 1/ Check the data computation pipeline (nodepairs, similarity)
 2/ Think of loss function
 
-Pr Carlos : 
-    - pairs of nodes sampling : random each time a graph is passed ? 
-    - Loss computation : batchwise or summation of nodepairs losses for each graph in batch ? 
+- Loss computation : batchwise or summation of nodepairs losses for each graph in batch ? 
     
 Meeting : 
     Think of similarity measures other than neighbor nucleotides RMSD 
@@ -33,11 +31,8 @@ if (__name__ == "__main__"):
     from rnaDataset import rnaDataset, Loader
     from utils import *
 
-
-
-    
     # config
-    N=1
+    N=1 # num node features 
     N_types=44
     n_hidden = 16 # number of hidden units
     n_bases = -1 # use number of relations as number of bases
@@ -87,7 +82,7 @@ if (__name__ == "__main__"):
             t_loss=0
             for i in range(batch_size): # for each elem in batch
                 #TODO
-                t_loss += ((out[idces[i][0]]-out[idces[i][1]])**2 - targets[i])**2
+                t_loss += (out[idces[i][0]]*out[idces[i][1]] - targets[i])**2 # (h1*h2 - r)^2
             # backward loss 
             optimizer.zero_grad()
             t_loss.backward()
@@ -108,7 +103,7 @@ if (__name__ == "__main__"):
                 out=model(graph)
                 t_loss=0
                 for i in range(batch_size): # for each elem in batch
-                    t_loss += ((out[idces[i][0]]-out[idces[i][1]])**2 - targets[i])**2
+                    t_loss += (out[idces[i][0]]*out[idces[i][1]] - targets[i])**2
                 
             print(f'Validation loss at epoch {epoch}: {t_loss}')
         

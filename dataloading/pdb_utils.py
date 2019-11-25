@@ -11,6 +11,8 @@ from Bio import PDB
 from Bio.PDB.MMCIFParser import MMCIFParser
 from Bio.SVDSuperimposer import SVDSuperimposer
 
+from Bio.PDB.PDBIO import Select
+
 import numpy as np
 
 
@@ -19,14 +21,16 @@ def read_pdb(pdb_id):
     describe inputs and outputs
     """
     parser = MMCIFParser()
-    structure_id=pdb_id[:4]
-    filename = f'../../data/rcsb_pdb/{structure_id}.cif/{structure_id}.cif'
+    structure_id=pdb_id
+    filename = f'C:/Users/jacqu/Documents/databases/rcsb_pdb/{structure_id}.cif/{structure_id}.cif'
     struc= parser.get_structure(structure_id, filename)
+    """
     residues = []
     for residue in struc.get_residues():
         if(residue.get_resname() in ['A','U','G','C']):
             residues.append(residue)
-    return residues
+    """
+    return struc
 
 def compute_rmsd(sup, coords_1, coords_2):
     """
@@ -49,6 +53,20 @@ def center(nt):
         c[1]+=float(a.y)
         c[2]+=float(a.z)
     return c/N_c
+
+class selectResidues(Select):
+    """ Selects residues by their pdb_position attribute to write into PDB (PDBIO writer object)"""
+    def __init__(self, positions):
+        super(selectResidues, self).__init__()
+        self.positions = positions
+        
+    def accept_residue(self, residue):
+        # Accepts residues in pdb writer 
+        #print(residue.get_id()[1])
+        if residue.get_id()[1] in self.positions:
+            return 1
+        else:
+            return 0
 
 
     
