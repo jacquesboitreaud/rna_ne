@@ -33,9 +33,15 @@ if __name__ == "__main__":
 from pdb_utils import *
 from utils import *
 
+LOCAL=False #server or local
+
 # Paths
-gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
-savedir = "C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data"
+if(LOCAL):
+    gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
+    savedir = "C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data"
+else:
+    gr_dir="../../data/RNA_graphs"
+    savedir = '../../data/DeepFRED_data'
 
 if(__name__=='__main__'):
     
