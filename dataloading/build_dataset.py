@@ -71,7 +71,7 @@ if(__name__=='__main__'):
             
             nodepair_counter=0
             
-            # Load PDB file 
+            # Load PDB file:
             pdbpath = os.path.join(pdb_dir,f'{pdbid}.cif',f'{pdbid}.cif')
             structure = read_pdb(pdbid, pdbpath)
             IO_writer.set_structure(structure)
