@@ -60,7 +60,6 @@ if(__name__=='__main__'):
         ## DEBUG
         if(cpt<1):
             print(f'Reading {pdbid}')
-            cpt+=1
             # Load graph  
             g = pickle.load(open(os.path.join(gr_dir,pickle_id), 'rb'))
             
@@ -73,7 +72,11 @@ if(__name__=='__main__'):
             
             # Load PDB file:
             pdbpath = os.path.join(pdb_dir,f'{pdbid}.cif',f'{pdbid}.cif')
-            structure = read_pdb(pdbid, pdbpath)
+            try:
+                structure = read_pdb(pdbid, pdbpath)
+                cpt+=1
+            except(FileNotFoundError):
+                next
             IO_writer.set_structure(structure)
             
             
