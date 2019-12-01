@@ -74,7 +74,7 @@ if(__name__=='__main__'):
             pdbpath = os.path.join(pdb_dir,f'{pdbid}.cif',f'{pdbid}.cif')
             try:
                 structure = read_pdb(pdbid, pdbpath)
-                cpt+=1
+                
 
                 IO_writer.set_structure(structure)
                 # Iterate over NON BACKBONE graph edges: 
@@ -94,8 +94,8 @@ if(__name__=='__main__'):
                         pdb_b = [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_b]
                         
                         
-                        IO_writer.save('../tmp/pdb_a.pdb', selectResidues(pdb_a))
-                        IO_writer.save('../tmp/pdb_b.pdb', selectResidues(pdb_b))
+                        IO_writer.save('tmp/pdb_a.pdb', selectResidues(pdb_a))
+                        IO_writer.save('tmp/pdb_b.pdb', selectResidues(pdb_b))
                         
                         #TODO: get the output tmscore
                         with open("tmp/align.out", "w") as rnaout:
@@ -109,6 +109,8 @@ if(__name__=='__main__'):
                         with open(os.path.join(savedir,pdbid),'wb'):
                             pickle.dump(graph_chunk)
                             pickle.dump((n_a, n_b, tmscore))
+                            
+                cpt+=1 # If the structure was successfully processed 
                         
             except(FileNotFoundError):
                     next
