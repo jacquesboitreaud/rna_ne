@@ -106,9 +106,9 @@ if(__name__=='__main__'):
                         
                         #Save n_a, n_b, subgraph and tmscore
                         filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
-                        with open(os.path.join(savedir,pdbid),'wb'):
-                            pickle.dump(graph_chunk)
-                            pickle.dump((n_a, n_b, tmscore))
+                        with open(os.path.join(savedir,pdbid),'wb') as f:
+                            pickle.dump(graph_chunk,f)
+                            pickle.dump((n_a, n_b, tmscore),f)
                             
                 cpt+=1 # If the structure was successfully processed 
                         
