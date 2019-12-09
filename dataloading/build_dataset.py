@@ -19,6 +19,7 @@ DEBUG: on 6n2v pdb (contains only RNA and ligands)
 """
 
 import numpy as np
+import itertools
 import pickle 
 import os 
 import networkx as nx
@@ -49,17 +50,23 @@ if(__name__=='__main__'):
     
     sup = SVDSuperimposer()
     IO_writer = PDBIO()
-    cpt=0
+    cpt=0 # PDB counter
+    chunks_counter = 0 
+    data_dict={}
     
-    k=4 # Number of hops allowed to be counted in neighborhood
-    tmscores = []
+    k=2 # Number of hops allowed to be counted in neighborhood
+    
+    faces = ['W', 'S', 'H']
+    orientations = ['C', 'T']
+    valid_edges = set([orient + e1 + e2 for e1, e2 in itertools.product(faces, faces) for orient in orientations])
+    valid_edges.remove('CWW')
     
     for pickle_id in os.listdir(gr_dir):
         pdbid = pickle_id[:-7]
         # Dict for RMSD
         distances={}
         ## DEBUG
-        if(cpt<10):
+        if(chunk_counter<20000):
             print(f'Reading {pdbid}')
             # Load graph  
             g = pickle.load(open(os.path.join(gr_dir,pickle_id), 'rb'))
@@ -78,7 +85,7 @@ if(__name__=='__main__'):
                 IO_writer.set_structure(structure)
                 
                 # Find non backbone graph edges 
-                iter_edges = [e for e in g.edges(data=True) if e[2]['label'] not in ['B35','B53']]
+                iter_edges = [e for e in g.edges(data=True) if e[2]['label'] not in ['B35','B53','S35','S53','S55','S33','CWW']]
                 
                 # Iterate over NON BACKBONE graph edges: 
                 for n_a, n_b ,label in iter_edges:
@@ -132,14 +139,19 @@ if(__name__=='__main__'):
                                     with open(os.path.join(savedir,filename),'wb') as f:
                                         pickle.dump(graph_chunk,f)
                                         pickle.dump([(n_a, n_b),(n_c,n_d), tmscore],f)
-                                        print(tmscore)
-                                        tmscores.append(tmscore)
+                                        #print(tmscore)
+                                        
+                # If the structure was successfully processed
+                cpt+=1  
+                data_dict[pdbid]=nodepair_counter
+                chunks_counter+= nodepair_counter # All chunks counter 
                                 
-                                cpt+=1 # If the structure was successfully processed 
+                                
                         
             except(FileNotFoundError):
                     next
-    np.save('TM_distrib.npy', tmscores)
+    print('Job finished, number of PDBs processed : ', cpt)
+    np.save('data_dict.npy', data_dict)
             
             
             
