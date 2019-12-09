@@ -70,12 +70,20 @@ def get_score(outfile):
     # Give path to output file
     with open(outfile,'r') as f:
         lines = f.readlines()
-        if('TM-score' not in lines[13]):
-            print('!!! Bad Line index (13) !!')
-        if('TM-score' not in lines[14]):
-            print('!!! Bad Line index (14) !!')
-        tm1, tm2 = float(lines[13].split()[1]), float(lines[14].split()[1])
-        return (tm1+tm2)/2
+        
+        #First catch: if file is empty (one sequence too short):
+        if(len(lines)==0):
+            print("Empty file")
+            return -1
+        else:
+            if('TM-score' not in lines[13]):
+                print('!!! Bad Line index (13) !!')
+                return -1
+            if('TM-score' not in lines[14]):
+                print('!!! Bad Line index (14) !!')
+                return -1
+            tm1, tm2 = float(lines[13].split()[1]), float(lines[14].split()[1])
+            return (tm1+tm2)/2
 
 
     

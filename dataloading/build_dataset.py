@@ -104,12 +104,14 @@ if(__name__=='__main__'):
                         
                         #get the output tmscore
                         tmscore = get_score("tmp/align.out")
-                        
-                        #Save n_a, n_b, subgraph and tmscore
-                        filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
-                        with open(os.path.join(savedir,filename),'wb') as f:
-                            pickle.dump(graph_chunk,f)
-                            pickle.dump((n_a, n_b, tmscore),f)
+                        if(tmscore<0): # Error happened 
+                            next
+                        else:
+                            #Save n_a, n_b, subgraph and tmscore
+                            filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
+                            with open(os.path.join(savedir,filename),'wb') as f:
+                                pickle.dump(graph_chunk,f)
+                                pickle.dump((n_a, n_b, tmscore),f)
                             
                 cpt+=1 # If the structure was successfully processed 
                         
