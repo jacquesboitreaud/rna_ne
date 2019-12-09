@@ -86,7 +86,7 @@ if(__name__=='__main__'):
                         
                         # get k-hops reachable nodes for na and nb
                         khops_a = nx.single_source_shortest_path_length(g, n_a, cutoff=k)
-                        khops_b = nx.single_source_shortest_path_length(g, n_a, cutoff=k)
+                        khops_b = nx.single_source_shortest_path_length(g, n_b, cutoff=k)
                         graph_chunk = g.subgraph({**khops_a , **khops_b})
                         
                         #Get pdb position of n_a neighbors
