@@ -119,7 +119,7 @@ if(__name__=='__main__'):
                             
                                 with open("tmp/align.out", "w") as rnaout:
                                     p = subprocess.run(["/home/mcb/users/jboitr/RNAalign/RNAalign", 
-                                                        "tmp/pdb_1.pdb", "tmp/pdb_1.pdb"], stdout=rnaout)
+                                                        "tmp/pdb_1.pdb", "tmp/pdb_2.pdb"], stdout=rnaout)
                             
                                 #get the output tmscore
                                 tmscore = get_score("tmp/align.out")
