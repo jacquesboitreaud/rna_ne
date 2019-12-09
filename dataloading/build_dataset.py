@@ -33,7 +33,7 @@ if __name__ == "__main__":
 from pdb_utils import *
 from utils import *
 
-LOCAL=False#server or local
+LOCAL=False #server or local
 
 # Paths
 if(LOCAL):
@@ -130,7 +130,7 @@ if(__name__=='__main__'):
                                     filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
                                     with open(os.path.join(savedir,filename),'wb') as f:
                                         pickle.dump(graph_chunk,f)
-                                        pickle.dump((n_a, n_b),(n_c,n_d), tmscore),f)
+                                        pickle.dump([(n_a, n_b),(n_c,n_d), tmscore],f)
                                         print(tmscore)
                                 
                                 cpt+=1 # If the structure was successfully processed 
