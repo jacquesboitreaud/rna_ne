@@ -70,6 +70,8 @@ def get_score(outfile):
     # Give path to output file
     with open(outfile,'r') as f:
         lines = f.readlines()
+        print(len(lines))
+        print(lines[6].split()[1])
         tm1, tm2 = float(lines[6].split()[1]), float(lines[7].split()[1])
         return (tm1+tm2)/2
 
