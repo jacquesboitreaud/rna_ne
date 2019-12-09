@@ -107,7 +107,7 @@ if(__name__=='__main__'):
                         
                         #Save n_a, n_b, subgraph and tmscore
                         filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
-                        with open(os.path.join(savedir,pdbid),'wb') as f:
+                        with open(os.path.join(savedir,filename),'wb') as f:
                             pickle.dump(graph_chunk,f)
                             pickle.dump((n_a, n_b, tmscore),f)
                             
