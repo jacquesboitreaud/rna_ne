@@ -97,11 +97,13 @@ if(__name__=='__main__'):
                         IO_writer.save('tmp/pdb_a.pdb', selectResidues(pdb_a))
                         IO_writer.save('tmp/pdb_b.pdb', selectResidues(pdb_b))
                         
-                        #TODO: get the output tmscore
+                        
                         with open("tmp/align.out", "w") as rnaout:
                             p = subprocess.run(["/home/mcb/users/jboitr/RNAalign/RNAalign", 
                                                 "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"], stdout=rnaout)
                         
+                        print(p)
+                        #TODO: get the output tmscore
                         tmscore = 1 
                         
                         #Save n_a, n_b, subgraph and tmscore
