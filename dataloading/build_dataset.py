@@ -33,7 +33,7 @@ if __name__ == "__main__":
 from pdb_utils import *
 from utils import *
 
-LOCAL=False #server or local
+LOCAL=True #server or local
 
 # Paths
 if(LOCAL):
@@ -74,12 +74,13 @@ if(__name__=='__main__'):
             pdbpath = os.path.join(pdb_dir,f'{pdbid}.cif',f'{pdbid}.cif')
             try:
                 structure = read_pdb(pdbid, pdbpath)
-                
-
                 IO_writer.set_structure(structure)
+                
+                # Find non backbone graph edges 
+                iter_edges = [e for e in g.edges(data=True) if e[2]['label'] not in ['B35','B53']]
+                
                 # Iterate over NON BACKBONE graph edges: 
-                for n_a, n_b ,label in g.edges(data=True):
-                    if(label not in ['B35','B53'] ):
+                for n_a, n_b ,label in iter_edges:
                         nt_a, nt_b = nodes[n_a]['nucleotide'], nodes[n_b]['nucleotide']
                         pos_a, pos_b = int(nt_a.pos), int(nt_b.pos)
                         nodepair_counter+=1
@@ -90,30 +91,49 @@ if(__name__=='__main__'):
                         graph_chunk = g.subgraph({**khops_a , **khops_b})
                         
                         #Get pdb position of n_a neighbors
-                        pdb_a = [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_a]
-                        pdb_b = [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_b]
+                        pdb_1 = [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_a]
+                        pdb_1 += [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_b]
                         
+                        IO_writer.save('tmp/pdb_1.pdb', selectResidues(pdb_1))
                         
-                        IO_writer.save('tmp/pdb_a.pdb', selectResidues(pdb_a))
-                        IO_writer.save('tmp/pdb_b.pdb', selectResidues(pdb_b))
-                        
-                        
-                        with open("tmp/align.out", "w") as rnaout:
-                            p = subprocess.run(["/home/mcb/users/jboitr/RNAalign/RNAalign", 
-                                                "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"], stdout=rnaout)
-                        
-                        #get the output tmscore
-                        tmscore = get_score("tmp/align.out")
-                        if(tmscore<0): # Error happened 
-                            next
-                        else:
-                            #Save n_a, n_b, subgraph and tmscore
-                            filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
-                            with open(os.path.join(savedir,filename),'wb') as f:
-                                pickle.dump(graph_chunk,f)
-                                pickle.dump((n_a, n_b, tmscore),f)
+                        #Iterate over edges again : 
+                        for n_c, n_d ,label in iter_edges:
+                            if(n_c!=n_a or n_d!=n_b):
+                                nt_c, nt_d = nodes[n_c]['nucleotide'], nodes[n_d]['nucleotide']
+                                pos_c, pos_d = int(nt_c.pos), int(nt_d.pos)
+                                nodepair_counter+=1
+                                
+                                # get k-hops reachable nodes for na and nb
+                                khops_c = nx.single_source_shortest_path_length(g, n_c, cutoff=k)
+                                khops_d = nx.single_source_shortest_path_length(g, n_d, cutoff=k)
+                                graph_chunk = g.subgraph({**khops_c , **khops_d})
+                                
+                                #Get pdb position of n_a neighbors
+                                pdb_2 = [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_c]
+                                pdb_2 += [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_d]
+                                
+                                
+                                IO_writer.save('tmp/pdb_2.pdb', selectResidues(pdb_1))
+                                    
                             
-                cpt+=1 # If the structure was successfully processed 
+                            
+                                with open("tmp/align.out", "w") as rnaout:
+                                    p = subprocess.run(["/home/mcb/users/jboitr/RNAalign/RNAalign", 
+                                                        "tmp/pdb_1.pdb", "tmp/pdb_1.pdb"], stdout=rnaout)
+                            
+                                #get the output tmscore
+                                tmscore = get_score("tmp/align.out")
+                                if(tmscore<0): # Error happened 
+                                    next
+                                else:
+                                    #Save edges, subgraph and tmscore
+                                    filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
+                                    with open(os.path.join(savedir,filename),'wb') as f:
+                                        pickle.dump(graph_chunk,f)
+                                        pickle.dump((n_a, n_b),(n_c,n_d), tmscore),f)
+                                        print(tmscore)
+                                
+                                cpt+=1 # If the structure was successfully processed 
                         
             except(FileNotFoundError):
                     next
