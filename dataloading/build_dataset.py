@@ -51,7 +51,8 @@ if(__name__=='__main__'):
     IO_writer = PDBIO()
     cpt=0
     
-    k=3 # Number of hops allowed to be counted in neighborhood
+    k=1 # Number of hops allowed to be counted in neighborhood
+    tmscores = []
     
     for pickle_id in os.listdir(gr_dir):
         pdbid = pickle_id[:-7]
@@ -132,11 +133,13 @@ if(__name__=='__main__'):
                                         pickle.dump(graph_chunk,f)
                                         pickle.dump([(n_a, n_b),(n_c,n_d), tmscore],f)
                                         print(tmscore)
+                                        tmscores.append(tmscore)
                                 
                                 cpt+=1 # If the structure was successfully processed 
                         
             except(FileNotFoundError):
                     next
+    np.save('TM_distrib.npy', tmscores)
             
             
             
