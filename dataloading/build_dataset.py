@@ -113,7 +113,7 @@ if(__name__=='__main__'):
                                 pdb_2 += [int(nodes[n]['nucleotide'].pdb_pos) for n in khops_d]
                                 
                                 
-                                IO_writer.save('tmp/pdb_2.pdb', selectResidues(pdb_1))
+                                IO_writer.save('tmp/pdb_2.pdb', selectResidues(pdb_2))
                                     
                             
                             
