@@ -66,7 +66,7 @@ if(__name__=='__main__'):
         # Dict for RMSD
         distances={}
         ## DEBUG
-        if(chunk_counter<20000):
+        if(chunks_counter<20000):
             print(f'Reading {pdbid}')
             # Load graph  
             g = pickle.load(open(os.path.join(gr_dir,pickle_id), 'rb'))
