@@ -51,7 +51,7 @@ if(__name__=='__main__'):
     IO_writer = PDBIO()
     cpt=0
     
-    k=5 # Number of hops allowed to be counted in neighborhood
+    k=4 # Number of hops allowed to be counted in neighborhood
     tmscores = []
     
     for pickle_id in os.listdir(gr_dir):
