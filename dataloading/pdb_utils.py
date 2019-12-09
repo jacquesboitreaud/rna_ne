@@ -70,9 +70,11 @@ def get_score(outfile):
     # Give path to output file
     with open(outfile,'r') as f:
         lines = f.readlines()
-        print(len(lines))
-        print(lines[6].split()[1])
-        tm1, tm2 = float(lines[6].split()[1]), float(lines[7].split()[1])
+        if('TM-score' not in lines[13]):
+            print('!!! Bad Line index (13) !!')
+        if('TM-score' not in lines[14]):
+            print('!!! Bad Line index (14) !!')
+        tm1, tm2 = float(lines[13].split()[1]), float(lines[14].split()[1])
         return (tm1+tm2)/2
 
 
