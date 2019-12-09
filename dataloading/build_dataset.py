@@ -58,7 +58,7 @@ if(__name__=='__main__'):
         # Dict for RMSD
         distances={}
         ## DEBUG
-        if(cpt<1):
+        if(cpt<10):
             print(f'Reading {pdbid}')
             # Load graph  
             g = pickle.load(open(os.path.join(gr_dir,pickle_id), 'rb'))
@@ -102,9 +102,8 @@ if(__name__=='__main__'):
                             p = subprocess.run(["/home/mcb/users/jboitr/RNAalign/RNAalign", 
                                                 "tmp/pdb_a.pdb", "tmp/pdb_b.pdb"], stdout=rnaout)
                         
-                        print(p)
-                        #TODO: get the output tmscore
-                        tmscore = 1 
+                        #get the output tmscore
+                        tmscore = get_score("tmp/align.out")
                         
                         #Save n_a, n_b, subgraph and tmscore
                         filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
