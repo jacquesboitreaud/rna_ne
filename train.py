@@ -38,7 +38,7 @@ if (__name__ == "__main__"):
     #Load train set and test set
     loaders = Loader(path=data_dir ,
                      N_graphs=cutoff, emb_size= feats_dim, 
-                     num_workers=0, batch_size=batch_size)
+                     num_workers=8, batch_size=batch_size)
     
     logs_dict={'train_loss':[],'val_loss':[]}
     N_edge_types = loaders.num_edge_types
