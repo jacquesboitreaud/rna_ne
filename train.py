@@ -81,7 +81,7 @@ if (__name__ == "__main__"):
             optimizer.step()
             t_loss+=b_loss.item()
             #logs and monitoring
-            if batch_idx % 100 == 0:
+            if batch_idx % 10 == 0:
                 # log
                 print('ep {}, batch {}, loss : {:.2f} '.format(epoch, 
                       batch_idx, b_loss.item()))
