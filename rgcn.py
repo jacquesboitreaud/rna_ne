@@ -80,6 +80,6 @@ def Loss(g, edges, tmscores):
         
         #print('Two edges embeddings are ', z_e1,z_e2)
         
-        loss += (torch.sqrt((z_e1-z_e2)**2)-5*tmscore)**2 # todo
+        loss += (torch.sqrt(torch.sum((z_e1-z_e2)**2))-5*tmscore)**2 # todo
         
     return loss
