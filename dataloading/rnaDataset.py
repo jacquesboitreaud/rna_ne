@@ -150,6 +150,7 @@ class Loader():
                  batch_size=64,
                  num_workers=4,
                  debug=False,
+                 simplified=True,
                  EVAL=False):
         """
         Wrapper for test loader, train loader 
@@ -165,7 +166,8 @@ class Loader():
         self.dataset = rnaDataset(rna_graphs_path=path,
                                   N_graphs= N_graphs,
                                   emb_size=emb_size,
-                                  debug=debug)
+                                  debug=debug,
+                                  simplified_edges=simplified)
         self.num_edge_types = self.dataset.num_edge_types
         self.EVAL=EVAL
 
