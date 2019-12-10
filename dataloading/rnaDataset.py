@@ -52,7 +52,7 @@ def collate_block(samples):
         edge_idces[:,3] = torch.tensor([sum(bnn[:i]) + edges[i][1][1] for i in range(N)]) 
         # dst of e2
     
-    return batched_graph, edge_idces, targets
+    return batched_graph, edge_idces, torch.tensor(targets).view(-1,1)
 
 
 class rnaDataset(Dataset):
