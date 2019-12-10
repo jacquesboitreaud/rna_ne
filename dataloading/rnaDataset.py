@@ -19,7 +19,6 @@ import dgl
 import pandas as pd
 import pickle
 import numpy as np
-import random
 import itertools
 from collections import Counter
 
@@ -49,18 +48,28 @@ class rnaDataset(Dataset):
     """
     def __init__(self, rna_graphs_path,
                  N_graphs,
-                 emb_size=1,
+                 emb_size,
                 debug=False):
         
         self.path = rna_graphs_path
-        self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number 
+        if(N_graphs!=None):
+            self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number
+        else:
+            self.all_graphs = os.listdir(self.path)
+            np.random.seed(10)
+            np.random.shuffle(self.all_graphs)
+            
         self.n = len(self.all_graphs)
         self.emb_size = emb_size
         # Build edge map
-        self.edge_map, self.edge_freqs = self._get_edge_data(simplified=True)
+        simplified=True
+        self.edge_map, self.edge_freqs = self._get_edge_data(simplified)
         
         # Number of edge categories (4 if simplified)
-        self.num_edge_types = len(self.edge_map)
+        if(simplified):
+            self.num_edge_types=4
+        else:
+            self.num_edge_types = len(self.edge_map)
         print(f"found {self.num_edge_types} edge types, frequencies: {self.edge_freqs}")
         
         if(debug):
@@ -95,7 +104,7 @@ class rnaDataset(Dataset):
         
         return g_dgl,(e1,e2), tmscore
     
-    def _get_edge_data(self,simplified=True):
+    def _get_edge_data(self,simplified):
         """
         Get edge type statistics, and edge map.
         """
@@ -130,15 +139,19 @@ class rnaDataset(Dataset):
     
 class Loader():
     def __init__(self,
-                 path='/home/mcb/users/jboitr/data/DeepFRED_data',
-                 N_graphs=10,
-                 emb_size=1,
+                 path,
+                 N_graphs,
+                 emb_size,
                  batch_size=64,
                  num_workers=4,
-                 debug=False):
+                 debug=False,
+                 EVAL=False):
         """
         Wrapper for test loader, train loader 
         Uncomment to add validation loader 
+        
+        EVAL returns just the test loader 
+        else, returns train, valid, 0
 
         """
 
@@ -149,6 +162,7 @@ class Loader():
                                   emb_size=emb_size,
                                   debug=debug)
         self.num_edge_types = self.dataset.num_edge_types
+        self.EVAL=EVAL
 
     def get_data(self):
         n = len(self.dataset)
@@ -156,7 +170,7 @@ class Loader():
         indices = list(range(n))
         # np.random.shuffle(indices)
         np.random.seed(0)
-        split_train, split_valid = 0.8, 0.8
+        split_train, split_valid = 0.8, 0.9
         train_index, valid_index = int(split_train * n), int(split_valid * n)
         
         train_indices = indices[:train_index]
@@ -168,16 +182,18 @@ class Loader():
         test_set = Subset(self.dataset, test_indices)
         print(f"Train set contains {len(train_set)} samples")
 
-
-        train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                  num_workers=self.num_workers, collate_fn=collate_block)
-
-        # valid_loader = DataLoader(dataset=valid_set, shuffle=True, batch_size=self.batch_size,
-        #                           num_workers=self.num_workers, collate_fn=collate_block)
+        if(not self.EVAL):
+            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
+                                      num_workers=self.num_workers, collate_fn=collate_block)
+    
+            valid_loader = DataLoader(dataset=valid_set, shuffle=True, batch_size=self.batch_size,
+                                       num_workers=self.num_workers, collate_fn=collate_block)
+            
+            return train_loader, valid_loader, 0
         
-        test_loader = DataLoader(dataset=test_set, shuffle=True, batch_size=self.batch_size,
+        else:
+            test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
                                  num_workers=self.num_workers, collate_fn=collate_block)
 
 
-        # return train_loader, valid_loader, test_loader
-        return train_loader, 0, test_loader
+            return 0,0, test_loader

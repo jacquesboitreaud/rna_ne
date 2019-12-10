@@ -36,7 +36,7 @@ class Model(nn.Module):
         self.build_model()
         
         #self.attn = GATConv(in_feats=self.out_dim, out_feats=self.out_dim,num_heads=1)
-        self.dense = nn.Linear(self.out_dim,1)
+        self.dense = nn.Linear(self.out_dim,2)
 
     def build_model(self):
         self.layers = nn.ModuleList()
@@ -68,18 +68,18 @@ def Loss(g, edges, tmscores):
     N = len(bnn) # batch size 
     loss=0
     for i in range(N):
-        u1 = (i-1) + sum(bnn[:i]) + edges[i][0][0] # source of e1
-        v1 = (i-1) + sum(bnn[:i]) + edges[i][0][1] # dst of e1
-        u2 = (i-1) + sum(bnn[:i]) + edges[i][1][0] # source of e2
-        v2 = (i-1) + sum(bnn[:i]) + edges[i][1][1] # dst of e2
+        u1 = sum(bnn[:i]) + edges[i][0][0] # source of e1
+        v1 = sum(bnn[:i]) + edges[i][0][1] # dst of e1
+        u2 = sum(bnn[:i]) + edges[i][1][0] # source of e2
+        v2 = sum(bnn[:i]) + edges[i][1][1] # dst of e2
         
         tmscore=tmscores[i]
         
-        z_e1 = g.ndata['h'][u1]+g.ndata['h'][v1] # edge 1 embed 
-        z_e2 = g.ndata['h'][u2]+g.ndata['h'][v2] # edge 2 embed
+        z_e1 = (g.ndata['h'][u1]+g.ndata['h'][v1])/2 # edge 1 embed (mean)
+        z_e2 = (g.ndata['h'][u2]+g.ndata['h'][v2])/2 # edge 2 embed (mean)
         
-        print('Two edges embeddings are ', z_e1.item(),z_e2.item())
+        print('Two edges embeddings are ', z_e1,z_e2)
         
-        loss += (((z_e1-z_e2)**2)-tmscore)**2 # todo
+        loss += (torch.dot(z_e1,z_e2)-tmscore)**2 # todo
         
     return loss
