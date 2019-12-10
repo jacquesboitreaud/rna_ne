@@ -93,7 +93,7 @@ if (__name__ == "__main__"):
         model.eval()
         t_loss = 0
         with torch.no_grad():
-            for batch_idx, (graph, edges, tmscore) in enumerate(test_loader):
+            for batch_idx, (graph, edges, tmscores) in enumerate(test_loader):
                 
                 graph=send_graph_to_device(graph,device)
                 model(graph)
