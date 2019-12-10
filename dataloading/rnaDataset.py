@@ -49,7 +49,8 @@ class rnaDataset(Dataset):
     def __init__(self, rna_graphs_path,
                  N_graphs,
                  emb_size,
-                debug=False):
+                 simplified_edges,
+                 debug=False):
         
         self.path = rna_graphs_path
         if(N_graphs!=None):
@@ -62,19 +63,33 @@ class rnaDataset(Dataset):
         self.n = len(self.all_graphs)
         self.emb_size = emb_size
         # Build edge map
-        simplified=True
-        self.edge_map, self.edge_freqs = self._get_edge_data(simplified)
-        
-        # Number of edge categories (4 if simplified)
-        if(simplified):
-            self.num_edge_types=4
-        else:
+        self.simplified_edges=simplified_edges
+        if(not self.simplified_edges):
+            self.edge_map, self.edge_freqs = self._get_edge_data()
             self.num_edge_types = len(self.edge_map)
-        print(f"found {self.num_edge_types} edge types, frequencies: {self.edge_freqs}")
+            print(f"found {self.num_edge_types} edge types, frequencies: {self.edge_freqs}")
+        else:
+            self.num_edge_types=4
+            # Edge map with Backbone (0), WW (1), stackings (2) and others (3)
+            self.edge_map={'B35':0,
+                      'B53':0,
+                      'CWW':1,
+                      'S33':2,
+                      'S35':2,
+                      'S53':2,
+                      'S55':2}
+            print("Using simplified edge representations. 4 categories of edges")
         
         if(debug):
             # special case for debugging
             pass
+        
+    def _get_simple_etype(self,label):
+        # Returns index of edge type for an edge label
+        if(label in self.edge_map):
+            return torch.tensor(self.edge_map[label])
+        else:
+            return torch.tensor(3) # Non canonical edges category
             
     def __len__(self):
         return self.n
@@ -91,7 +106,11 @@ class rnaDataset(Dataset):
         e2 = [i for (i,n) in enumerate(graph.nodes()) if n[1] in e2_vertices]
         
         graph = nx.to_undirected(graph)
-        one_hot = {edge: torch.tensor(self.edge_map[label]) for edge, label in
+        if(self.simplified_edges):
+            one_hot = {edge: self._get_simple_etype(label) for edge, label in
+                   (nx.get_edge_attributes(graph, 'label')).items()}
+        else:
+            one_hot = {edge: torch.tensor(self.edge_map[label]) for edge, label in
                    (nx.get_edge_attributes(graph, 'label')).items()}
 
         nx.set_edge_attributes(graph, name='one_hot', values=one_hot)
@@ -104,7 +123,7 @@ class rnaDataset(Dataset):
         
         return g_dgl,(e1,e2), tmscore
     
-    def _get_edge_data(self,simplified):
+    def _get_edge_data(self):
         """
         Get edge type statistics, and edge map.
         """
@@ -115,23 +134,9 @@ class rnaDataset(Dataset):
             graph = pickle.load(open(os.path.join(self.path, g), 'rb'))
             edges = {e_dict['label'] for _,_,e_dict in graph.edges(data=True)}
             edge_counts.update(edges)
-        
-        if(simplified): # Only three classes
-            # Edge map with Backbone (0), WW (1), stackings (2) and others (3)
-            edge_map={'B35':0,
-                      'B53':0,
-                      'CWW':1,
-                      'S33':2,
-                      'S35':2,
-                      'S53':2,
-                      'S55':2}
-            for label in edge_counts.keys():
-                if label not in edge_map:
-                    edge_map[label]=3
-        else:
-            # Edge map with all different types of edges (FR3D edges)
-            edge_map = {label:i for i,label in enumerate(sorted(edge_counts))}
-        
+            
+        # Edge map with all different types of edges (FR3D edges)
+        edge_map = {label:i for i,label in enumerate(sorted(edge_counts))}
         
         IDF = {k: np.log(len(graphlist)/ edge_counts[k] + 1) for k in edge_counts}
         return edge_map, IDF
