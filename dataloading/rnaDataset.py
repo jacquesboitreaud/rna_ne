@@ -29,7 +29,6 @@ import networkx as nx
 
 from tqdm import tqdm
 from rna_classes import *
-from graph_process import *
 
 from torch.utils.data import Dataset, DataLoader, Subset
 
@@ -38,33 +37,30 @@ def collate_block(samples):
     # Collates samples into a batch
     # The input `samples` is a list of pairs
     #  (graph, label).
-    graphs, n_nodes, node_indices, targets = map(list, zip(*samples))
+    graphs, edges, targets = map(list, zip(*samples))
     batched_graph = dgl.batch(graphs)
+    edges_i = [(e1[0][1],e1[1][1],e2[0][1],e2[1][1]) for (e1,e2) in edges]
     
-    cpt=0
-    idces=[]
-    for i in range(len(samples)):
-        n1, n2 = node_indices[i][0]-1, node_indices[i][1]-1 # Nodes are indexed from 1 (to check...)
-        idces.append((n1+cpt,n2+cpt)) # find node indices in the batched_graph object
-        cpt+=n_nodes[i]
-    
-    return batched_graph, idces, targets
+    return batched_graph, edges_i, targets
 
 
 class rnaDataset(Dataset):
     """ 
     pytorch Dataset for training on pairs of nodes of RNA graphs 
     """
-    def __init__(self, emb_size=1,
-                rna_graphs_path="../data/annotated",
-                debug=False, shuffled=False):
+    def __init__(self, rna_graphs_path,
+                 N_graphs,
+                 emb_size=1,
+                debug=False):
         
         self.path = rna_graphs_path
-        self.all_graphs = os.listdir(self.path)
+        self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number 
         self.n = len(self.all_graphs)
         self.emb_size = emb_size
         # Build edge map
-        self.edge_map, self.edge_freqs = self._get_edge_data()
+        self.edge_map, self.edge_freqs = self._get_edge_data(simplified=True)
+        
+        # Number of edge categories (4 if simplified)
         self.num_edge_types = len(self.edge_map)
         print(f"found {self.num_edge_types} edge types, frequencies: {self.edge_freqs}")
         
@@ -77,9 +73,15 @@ class rnaDataset(Dataset):
     
     def __getitem__(self, idx):
         # gets the RNA graph n°idx in the list
-        # Annotated pickle files are tuples (g, dict of rmsds between nodepairs)
-        
-        graph, pairwise_dists = pickle.load(open(os.path.join(self.path, self.all_graphs[idx]), 'rb'))
+        with open(os.path.join(self.path, self.all_graphs[idx]),'rb') as f:
+            graph = pickle.load(f)
+            e1,e2, tmscore = pickle.load(f)
+            
+        e1_vertices=(e1[0][1], e1[1][1])
+        e2_vertices=(e2[0][1], e2[1][1])
+        print(e1_vertices, e2_vertices)
+        e1 = [n[1] for n in graph.nodes()]
+        print(e1)
         
         graph = nx.to_undirected(graph)
         one_hot = {edge: torch.tensor(self.edge_map[label]) for edge, label in
@@ -90,49 +92,52 @@ class rnaDataset(Dataset):
         # Create dgl graph
         g_dgl = dgl.DGLGraph()
         g_dgl.from_networkx(nx_graph=graph, edge_attrs=['one_hot'])
-
-        n_nodes = len(g_dgl.nodes())
-        g_dgl.ndata['h'] = torch.ones((n_nodes, self.emb_size)) # nodes embeddings 
         
-        # Random selection of a pair of nodes and their rmsd 
-        nodes, r = random.choice(list(pairwise_dists.items()))
+        g_dgl.ndata['h'] = torch.ones((g_dgl.number_of_nodes(), self.emb_size)) # nodes embeddings 
         
-        #TODO : find a way to pass this info batchwise
-        # K = triplet n_nodes, n1,n2
-        n1,n2= nodes[0][1],nodes[1][1]
-        
-        return g_dgl, n_nodes, (n1,n2), r
+        return g_dgl,(e1,e2), tmscore
     
-    def _get_edge_data(self):
+    def _get_edge_data(self,simplified=True):
         """
         Get edge type statistics, and edge map.
         """
         edge_counts = Counter()
-        edge_labels = set()
         print("Collecting edge data...")
         graphlist = os.listdir(self.path)
         for g in tqdm(graphlist):
-            graph, _ = pickle.load(open(os.path.join(self.path, g), 'rb'))
+            graph = pickle.load(open(os.path.join(self.path, g), 'rb'))
             edges = {e_dict['label'] for _,_,e_dict in graph.edges(data=True)}
             edge_counts.update(edges)
         
-        # Edge map with all different types of edges (FR3D edges)
-        edge_map = {label:i for i,label in enumerate(sorted(edge_counts))}
+        if(simplified): # Only three classes
+            # Edge map with Backbone (0), WW (1), stackings (2) and others (3)
+            edge_map={'B35':0,
+                      'B53':0,
+                      'CWW':1,
+                      'S33':2,
+                      'S35':2,
+                      'S53':2,
+                      'S55':2}
+            for label in edge_counts.keys():
+                if label not in edge_map:
+                    edge_map[label]=3
+        else:
+            # Edge map with all different types of edges (FR3D edges)
+            edge_map = {label:i for i,label in enumerate(sorted(edge_counts))}
         
-        # Edge map with Backbone (0), WW (1), and others (2)
-        #TODO
+        
         IDF = {k: np.log(len(graphlist)/ edge_counts[k] + 1) for k in edge_counts}
         return edge_map, IDF
         
     
 class Loader():
     def __init__(self,
-                 annot_path='../data/annotated',
+                 path='/home/mcb/users/jboitr/data/DeepFRED_data',
+                 N_graphs=10,
                  emb_size=1,
-                 batch_size=128,
-                 num_workers=20,
-                 debug=False,
-                 shuffled=False):
+                 batch_size=64,
+                 num_workers=4,
+                 debug=False):
         """
         Wrapper for test loader, train loader 
         Uncomment to add validation loader 
@@ -141,9 +146,10 @@ class Loader():
 
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.dataset = rnaDataset(emb_size, rna_graphs_path=annot_path,
-                          debug=debug,
-                          shuffled=shuffled)
+        self.dataset = rnaDataset(rna_graphs_path=path,
+                                  N_graphs= N_graphs,
+                                  emb_size=emb_size,
+                                  debug=debug)
         self.num_edge_types = self.dataset.num_edge_types
 
     def get_data(self):
@@ -152,7 +158,7 @@ class Loader():
         indices = list(range(n))
         # np.random.shuffle(indices)
         np.random.seed(0)
-        split_train, split_valid = 0.7, 0.7
+        split_train, split_valid = 0.8, 0.8
         train_index, valid_index = int(split_train * n), int(split_valid * n)
         
         train_indices = indices[:train_index]

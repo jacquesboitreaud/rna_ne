@@ -5,18 +5,7 @@ Created on Wed Nov  6 18:44:04 2019
 @author: jacqu
 
 Loads training set of edge pairs.
-Instantiates gcn model 
-
-Trains model on node pairs, under simLoss
-
-## TODO : 
-1/ Check the data computation pipeline (nodepairs, similarity)
-2/ Think of loss function
-
-- Loss computation : batchwise or summation of nodepairs losses for each graph in batch ? 
-    
-Meeting : 
-    Think of similarity measures other than neighbor nucleotides RMSD 
+Instantiates + trains gcn model 
 
 """
 import sys
@@ -27,28 +16,27 @@ import torch.nn.utils.clip_grad as clip
 import torch.nn.functional as F
 if (__name__ == "__main__"):
     sys.path.append("./dataloading")
-    from rgcn import Model, simLoss
+    from rgcn import Model, Loss
     from rnaDataset import rnaDataset, Loader
     from utils import *
 
     # config
-    N=1 # num node features 
-    N_types=44
-    n_hidden = 16 # number of hidden units
-    n_bases = -1 # use number of relations as number of bases
-    n_hidden_layers = 1 # use 1 input layer, 1 output layer, no hidden layer
+    feats_dim, h_size, out_size=1, 16, 4 # dims 
     n_epochs = 2 # epochs to train
-    batch_size = 4
+    batch_size = 3
     
     #Load train set and test set
-    loaders = Loader(num_workers=1, batch_size=batch_size)
+    loaders = Loader(path= 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data',
+                     N_graphs=3, num_workers=0, batch_size=batch_size)
+    N_edge_types = loaders.num_edge_types
     train_loader, _, test_loader = loaders.get_data()
     
     #Model & hparams
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     parallel=False
 
-    model = Model(num_nodes=N, h_dim=16, out_dim=1, num_rels=N_types, num_bases=-1).to(device)
+    model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
+                  num_rels=N_edge_types, num_bases=-1).to(device)
     
     if (parallel): #torch.cuda.device_count() > 1 and
         print("Start training using ", torch.cuda.device_count(), "GPUs!")
@@ -65,25 +53,14 @@ if (__name__ == "__main__"):
     for epoch in range(1, n_epochs+1):
         print(f'Starting epoch {epoch}')
         model.train()
-        for batch_idx, (graph, idces, targets) in enumerate(train_loader):
+        for batch_idx, (graph, edges, tmscores) in enumerate(train_loader):
             
-            # Data checks
-            if(len(targets)!=batch_size):
-                print(f'targets length problem, not equal to batch size: l is {len(targets)}')
-                print(targets)
-            if(len(idces)!=batch_size):
-                print(f'idces length problem, not equal to batch size: l is {len(idces)}')
-                print(idces)
             # Embedding for each node
             graph=send_graph_to_device(graph,device)
             out = model(graph)
             
             #Compute loss term for each elemt in batch
-            t_loss=0
-            for i in range(batch_size): # for each elem in batch
-                #TODO
-                t_loss += (out[idces[i][0]]*out[idces[i][1]] - targets[i])**2 # (h1*h2 - r)^2
-            # backward loss 
+            t_loss = Loss(graph, edges, tmscores)
             optimizer.zero_grad()
             t_loss.backward()
             #clip.clip_grad_norm_(model.parameters(),1)

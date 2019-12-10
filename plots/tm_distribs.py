@@ -10,9 +10,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-k=4
+k=5
 
 tm = np.load(f'TM_distrib_{k}.npy', allow_pickle=True)
 
-sns.distplot(tm)
+sns.distplot(tm, kde=False, bins=20,norm_hist=False)
 plt.xlim(0,1)
+plt.xlabel('TM score')
+plt.title(f'k={k}')
