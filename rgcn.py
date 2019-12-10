@@ -78,8 +78,8 @@ def Loss(g, edges, tmscores):
         z_e1 = (g.ndata['h'][u1]+g.ndata['h'][v1])/2 # edge 1 embed (mean)
         z_e2 = (g.ndata['h'][u2]+g.ndata['h'][v2])/2 # edge 2 embed (mean)
         
-        print('Two edges embeddings are ', z_e1,z_e2)
+        #print('Two edges embeddings are ', z_e1,z_e2)
         
-        loss += (torch.dot(z_e1,z_e2)-tmscore)**2 # todo
+        loss += (torch.dot(z_e1,z_e2)-5*tmscore)**2 # todo
         
     return loss
