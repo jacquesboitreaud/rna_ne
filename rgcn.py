@@ -80,6 +80,6 @@ def Loss(g, edges, tmscores):
         
         #print('Two edges embeddings are ', z_e1,z_e2)
         
-        loss += (torch.dot(z_e1,z_e2)-5*tmscore)**2 # todo
+        loss += (F.pairwise_distance(z_e1,z_e2)-5*tmscore)**2 # todo
         
     return loss
