@@ -71,6 +71,7 @@ if (__name__ == "__main__"):
             
             # Embedding for each node
             graph=send_graph_to_device(graph,device)
+            tmscores=tmscores.to(device)
             z_e1, z_e2 = model(graph, edges)
             
             #Compute loss term for each elemt in batch
@@ -96,8 +97,9 @@ if (__name__ == "__main__"):
             for batch_idx, (graph, edges, tmscores) in enumerate(test_loader):
                 
                 graph=send_graph_to_device(graph,device)
-                model(graph)
-                t_loss += Loss(graph, edges, tmscores).item()
+                tmscores=tmscores.to(device)
+                z_e1, z_e2 = model(graph, edges)
+                t_loss += Loss(z_e1,z_e2, tmscores).item()
                 
             print(f'Validation loss at epoch {epoch}: {t_loss}')
             logs_dict['val_loss'].append(t_loss)
