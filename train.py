@@ -71,10 +71,10 @@ if (__name__ == "__main__"):
             
             # Embedding for each node
             graph=send_graph_to_device(graph,device)
-            model(graph)
+            z_e1, z_e2 = model(graph, edges)
             
             #Compute loss term for each elemt in batch
-            b_loss = Loss(graph, edges, tmscores)
+            b_loss = Loss(z_e1,z_e2, tmscores)
             optimizer.zero_grad()
             b_loss.backward()
             #clip.clip_grad_norm_(model.parameters(),1)
