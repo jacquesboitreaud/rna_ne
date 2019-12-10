@@ -52,8 +52,13 @@ class Model(nn.Module):
         self.layers.append(h2o)
 
 
-    def forward(self, g):
+    def forward(self, g, edge_idces):
         #print('edge data size ', g.edata['one_hot'].size())
+        
+        u1=edge_idces[:,0]
+        v1=edge_idces[:,1]
+        u2=edge_idces[:,2]
+        v2=edge_idces[:,3]
         
         for layer in self.layers:
              #print(g.ndata['h'].size())
@@ -61,25 +66,12 @@ class Model(nn.Module):
              g.ndata['h']=layer(g,g.ndata['h'],g.edata['one_hot'])
         
         g.ndata['h']=self.dense(g.ndata['h'])
+        return (g.ndata['h'][u1]+g.ndata['h'][v1])/2, (g.ndata['h'][u2]+g.ndata['h'][v2])/2
         
-def Loss(g, edges, tmscores):
+def Loss(z_e1,z_e2, tmscores):
     # Takes batches graph and labels, computes loss 
-    bnn = g.batch_num_nodes
-    N = len(bnn) # batch size 
-    loss=0
-    for i in range(N):
-        u1 = sum(bnn[:i]) + edges[i][0][0] # source of e1
-        v1 = sum(bnn[:i]) + edges[i][0][1] # dst of e1
-        u2 = sum(bnn[:i]) + edges[i][1][0] # source of e2
-        v2 = sum(bnn[:i]) + edges[i][1][1] # dst of e2
-        
-        tmscore=tmscores[i]
-        
-        z_e1 = (g.ndata['h'][u1]+g.ndata['h'][v1])/2 # edge 1 embed (mean)
-        z_e2 = (g.ndata['h'][u2]+g.ndata['h'][v2])/2 # edge 2 embed (mean)
-        
-        #print('Two edges embeddings are ', z_e1,z_e2)
-        
-        loss += (torch.sqrt(torch.sum((z_e1-z_e2)**2))-5*(1-tmscore))**2 # todo
+    #print('Two edges embeddings are ', z_e1,z_e2)
+    
+    loss = torch.sum((torch.sqrt(torch.sum((z_e1-z_e2)**2))-5*(1-tmscores))**2) 
         
     return loss

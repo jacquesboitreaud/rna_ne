@@ -39,7 +39,20 @@ def collate_block(samples):
     graphs, edges, targets = map(list, zip(*samples))
     batched_graph = dgl.batch(graphs)
     
-    return batched_graph, edges, targets
+    bnn = batched_graph.batch_num_nodes
+    N = len(bnn) # batch size
+    edge_idces = torch.zeros((N,4), dtype=torch.long)
+    for i in range(N):
+        edge_idces[:,0] = torch.tensor([sum(bnn[:i]) + edges[i][0][0] for i in range(N)]) 
+        # source of e1
+        edge_idces[:,1] = torch.tensor([sum(bnn[:i]) + edges[i][0][1] for i in range(N)]) 
+        # dst of e1
+        edge_idces[:,2] = torch.tensor([sum(bnn[:i]) + edges[i][1][0] for i in range(N)]) 
+        # source of e2
+        edge_idces[:,3] = torch.tensor([sum(bnn[:i]) + edges[i][1][1] for i in range(N)]) 
+        # dst of e2
+    
+    return batched_graph, edge_idces, targets
 
 
 class rnaDataset(Dataset):
