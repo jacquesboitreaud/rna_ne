@@ -36,7 +36,7 @@ if (__name__ == "__main__"):
     parallel=False
 
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, num_bases=-1).to(device)
+                  num_rels=N_edge_types, num_bases=-1, num_hidden_layers=2).to(device)
     
     if (parallel): #torch.cuda.device_count() > 1 and
         print("Start training using ", torch.cuda.device_count(), "GPUs!")
@@ -76,11 +76,13 @@ if (__name__ == "__main__"):
         model.eval()
         t_loss = 0
         with torch.no_grad():
-            for batch_idx, (graph,n1,n2,r) in enumerate(train_loader):
-                out=model(graph)
-                t_loss=0
-                for i in range(batch_size): # for each elem in batch
-                    t_loss += (out[idces[i][0]]*out[idces[i][1]] - targets[i])**2
+            for batch_idx, (graph, edges, tmscore) in enumerate(test_loader):
                 
-            print(f'Validation loss at epoch {epoch}: {t_loss}')
+                graph=send_graph_to_device(graph,device)
+                out=model(graph)
+                t_loss += Loss(graph, edges, tmscores)
+                
+            print(f'Validation loss at epoch {epoch}: {t_loss.item()}')
+            
+            # LOGS and SAVE : 
         

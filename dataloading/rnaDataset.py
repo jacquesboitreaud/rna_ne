@@ -39,9 +39,8 @@ def collate_block(samples):
     #  (graph, label).
     graphs, edges, targets = map(list, zip(*samples))
     batched_graph = dgl.batch(graphs)
-    edges_i = [(e1[0][1],e1[1][1],e2[0][1],e2[1][1]) for (e1,e2) in edges]
     
-    return batched_graph, edges_i, targets
+    return batched_graph, edges, targets
 
 
 class rnaDataset(Dataset):
@@ -79,9 +78,8 @@ class rnaDataset(Dataset):
             
         e1_vertices=(e1[0][1], e1[1][1])
         e2_vertices=(e2[0][1], e2[1][1])
-        print(e1_vertices, e2_vertices)
-        e1 = [n[1] for n in graph.nodes()]
-        print(e1)
+        e1 = [i for (i,n) in enumerate(graph.nodes()) if n[1] in e1_vertices]
+        e2 = [i for (i,n) in enumerate(graph.nodes()) if n[1] in e2_vertices]
         
         graph = nx.to_undirected(graph)
         one_hot = {edge: torch.tensor(self.edge_map[label]) for edge, label in

@@ -62,14 +62,24 @@ class Model(nn.Module):
         
         g.ndata['h']=self.dense(g.ndata['h'])
         
-def Loss(graph, edges, tmscores):
+def Loss(g, edges, tmscores):
     # Takes batches graph and labels, computes loss 
-    bnn = graph.batch_num_nodes
+    bnn = g.batch_num_nodes
     N = len(bnn) # batch size 
+    loss=0
     for i in range(N):
-        u1 = (i-1) + sum(bnn[:i]) + edges[i]
+        u1 = (i-1) + sum(bnn[:i]) + edges[i][0][0] # source of e1
+        v1 = (i-1) + sum(bnn[:i]) + edges[i][0][1] # dst of e1
+        u2 = (i-1) + sum(bnn[:i]) + edges[i][1][0] # source of e2
+        v2 = (i-1) + sum(bnn[:i]) + edges[i][1][1] # dst of e2
+        
+        tmscore=tmscores[i]
+        
         z_e1 = g.ndata['h'][u1]+g.ndata['h'][v1] # edge 1 embed 
         z_e2 = g.ndata['h'][u2]+g.ndata['h'][v2] # edge 2 embed
         
+        print('Two edges embeddings are ', z_e1.item(),z_e2.item())
         
-    return 0
+        loss += (((z_e1-z_e2)**2)-tmscore)**2 # todo
+        
+    return loss
