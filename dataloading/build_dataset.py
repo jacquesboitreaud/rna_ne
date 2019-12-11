@@ -145,12 +145,14 @@ if(__name__=='__main__'):
                                     pickle.dump((graph_chunk,e1,e2, tmscore),f)
                                     #print(tmscore)
                                     TMS.append(tmscore)
-                                    print(tmscore)
                                     
             # If the structure was successfully processed
             cpt+=1  
             data_dict[pdbid]=nodepair_counter
             chunks_counter+= nodepair_counter # All chunks counter 
+            if(nodepair_counter>2000):
+                break
+            print(chunks_counter)
             np.save('final_dist.npy',TMS)
                                 
                                 
