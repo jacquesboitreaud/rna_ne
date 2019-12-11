@@ -70,6 +70,7 @@ if (__name__ == "__main__"):
         for batch_idx, (graph, edges, tmscores) in enumerate(train_loader):
             
             # Embedding for each node
+            n = tmscores.shape[0]
             graph=send_graph_to_device(graph,device)
             tmscores=tmscores.to(device)
             z_e1, z_e2 = model(graph, edges)
@@ -85,10 +86,10 @@ if (__name__ == "__main__"):
             if batch_idx % 10 == 0:
                 # log
                 print('ep {}, batch {}, loss : {:.2f} '.format(epoch, 
-                      batch_idx, b_loss.item()))
+                      batch_idx, b_loss.item()/n))
                 
         # End of training pass : add log to logs dict
-        logs_dict['train_loss'].append(t_loss/(batch_size*len(train_loader)))
+        logs_dict['train_loss'].append(t_loss/(n*len(train_loader)))
         
         # Validation pass
         model.eval()
@@ -96,13 +97,14 @@ if (__name__ == "__main__"):
         with torch.no_grad():
             for batch_idx, (graph, edges, tmscores) in enumerate(test_loader):
                 
+                n = tmscores.shape[0] # batch size
                 graph=send_graph_to_device(graph,device)
                 tmscores=tmscores.to(device)
                 z_e1, z_e2 = model(graph, edges)
-                t_loss += Loss(z_e1,z_e2, tmscores).item()
+                t_loss += Loss(z_e1,z_e2, tmscores).item()/n # per item loss 
                 
-            print(f'Validation loss at epoch {epoch}: {t_loss}')
-            logs_dict['val_loss'].append(t_loss/(batch_size*len(test_loader)))
+            print(f'Validation loss at epoch {epoch}, per item: {t_loss/len(test_loader)}')
+            logs_dict['val_loss'].append(t_loss/len(test_loader))
             
             # LOGS and SAVE :     
             torch.save( model.state_dict(), save_path)
