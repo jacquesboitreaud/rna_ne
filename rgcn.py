@@ -22,6 +22,9 @@ from dgl import mean_nodes
 from dgl.nn.pytorch.glob import SumPooling
 from dgl.nn.pytorch.conv import GATConv, RelGraphConv
 
+import seaborn as sns 
+import matplotlib.pyplot as plt
+
 class Model(nn.Module):
     # Computes embeddings for all nodes
     # No features
@@ -67,11 +70,33 @@ class Model(nn.Module):
         
         g.ndata['h']=self.dense(g.ndata['h'])
         return (g.ndata['h'][u1]+g.ndata['h'][v1])/2, (g.ndata['h'][u2]+g.ndata['h'][v2])/2
+    
+    def draw_rec(self, z_e1,z_e2, tmscores, title = ''):
+        """
+        A way to assess how the loss fits the TM scores task visually
+        :param true_K:
+        :param predicted_K:
+        :param loss_value: python float
+        :return:
+        """
+        true_K = 5*(1-tmscores)
+        predicted_K = torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1))
+        
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        sns.heatmap(true_K.detach().numpy(), vmin=0, vmax=1, ax=ax1, square=True, cbar=False)
+        sns.heatmap(predicted_K.detach().numpy(), vmin=0, vmax=1, ax=ax2, square=True, cbar=False,
+                    cbar_kws={"shrink": 1})
+        ax1.set_title("Ground Truth")
+        ax2.set_title("GCN")
+        fig.suptitle(title)
+        plt.tight_layout()
+        plt.show()
         
 def Loss(z_e1,z_e2, tmscores):
     # Takes batches graph and labels, computes loss 
     #print('Two edges embeddings are ', z_e1,z_e2)
     
-    loss = torch.sum((torch.sqrt(torch.sum((z_e1-z_e2)**2))-5*(1-tmscores))**2) 
+    loss = torch.sum((torch.sqrt(torch.sum((z_e1-z_e2)**2),dim=1)-5*(1-tmscores))**2) 
         
     return loss
+
