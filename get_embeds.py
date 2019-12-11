@@ -77,4 +77,5 @@ if (__name__ == "__main__"):
                 edges_d['z2'].append(z_e2[i][1].item())
                 
             df = pd.DataFrame.from_dict(edges_d)
+            print(df.shape)
             df.to_csv('edge_embeddings.csv')
