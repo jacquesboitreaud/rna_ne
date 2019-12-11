@@ -30,7 +30,7 @@ if (__name__ == "__main__"):
     feats_dim, h_size, out_size=2, 8, 4 # dims 
     n_epochs = 30 # epochs to train
     batch_size = 64
-    cutoff =100
+    cutoff =None
 
     save_path, load_path = 'saved_model_w/model1.pth', 'saved_model_w/model1.pth'
     logs_path='saved_model_w/logs1.npy'
