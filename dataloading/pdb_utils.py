@@ -72,7 +72,7 @@ def get_score(outfile):
         lines = f.readlines()
         
         #First catch: if file is empty/only header (one sequence too short):
-        if(len(lines)<=4):
+        if(len(lines)<=14):
             print("Empty file")
             return -1
         else:
