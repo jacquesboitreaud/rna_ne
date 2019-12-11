@@ -28,7 +28,7 @@ if (__name__ == "__main__"):
 
     # config
     feats_dim, h_size, out_size=2, 8, 4 # dims 
-    n_epochs = 6 # epochs to train
+    n_epochs = 30 # epochs to train
     batch_size = 64
     cutoff =100
 
