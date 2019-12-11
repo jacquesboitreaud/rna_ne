@@ -28,12 +28,12 @@ if (__name__ == "__main__"):
 
     # config
     feats_dim, h_size, out_size=2, 8, 4 # dims 
-    n_epochs = 1 # epochs to train
+    n_epochs = 6 # epochs to train
     batch_size = 64
     cutoff =100
 
     save_path, load_path = 'saved_model_w/model1.pth', 'saved_model_w/model1.pth'
-    logs_path='saved_model_w/logs1.pth'
+    logs_path='saved_model_w/logs1.npy'
     
     #Load train set and test set
     loaders = Loader(path=data_dir ,
@@ -88,7 +88,7 @@ if (__name__ == "__main__"):
                       batch_idx, b_loss.item()))
                 
         # End of training pass : add log to logs dict
-        logs_dict['train_loss'].append(t_loss)
+        logs_dict['train_loss'].append(t_loss/(batch_size*len(train_loader)))
         
         # Validation pass
         model.eval()
@@ -102,11 +102,10 @@ if (__name__ == "__main__"):
                 t_loss += Loss(z_e1,z_e2, tmscores).item()
                 
             print(f'Validation loss at epoch {epoch}: {t_loss}')
-            logs_dict['val_loss'].append(t_loss)
+            logs_dict['val_loss'].append(t_loss/(batch_size*len(test_loader)))
             
-            # LOGS and SAVE : 
-            if(epoch%5==0):     
-                torch.save( model.state_dict(), save_path)
-                pickle.dump(logs_dict, open(logs_path,'wb'))
-                print(f"model saved to {save_path}")
+            # LOGS and SAVE :     
+            torch.save( model.state_dict(), save_path)
+            pickle.dump(logs_dict, open(logs_path,'wb'))
+            print(f"model saved to {save_path}")
         
