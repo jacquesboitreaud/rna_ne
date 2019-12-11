@@ -97,13 +97,14 @@ class Model(nn.Module):
         plt.tight_layout()
         plt.show()
         
-def Loss(z_e1,z_e2, tmscores):
+def Loss(z_e1,z_e2, tmscores, v=False):
     # Takes batches graph and labels, computes loss 
     #print('Two edges embeddings are ', z_e1,z_e2)
     predicted_K= torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
     true_K = 5*(1-tmscores)
-    print('Predicted K: ', predicted_K)
-    print('True K: ', true_K)
+    if(v):
+        print('Predicted K: ', predicted_K)
+        print('True K: ', true_K)
     loss = torch.sum((predicted_K-true_K)**2) 
         
     return loss
