@@ -134,18 +134,17 @@ class rnaDataset(Dataset):
     def __getitem__(self, idx):
         # gets the RNA graph n°idx in the list
         with open(os.path.join(self.path, self.all_graphs[idx]),'rb') as f:
-            graph = pickle.load(f)
-            e1,e2, tmscore = pickle.load(f)
-        
+            graph,e1,e2, tmscore = pickle.load(f)
+            
         if(self.EVAL):
-            l1=[e[2]['label'] for e in graph.edges(data=True) if e[:2]==e1]
-            l2=[e[2]['label'] for e in graph.edges(data=True) if e[:2]==e2]
-            l1=[l for l in l1 if l[0]!='S' and l[0]!='B']
-            l2=[l for l in l2 if l[0]!='S' and l[0]!='B']
+            l1=e1[2]['label']
+            l2=e2[2]['label']
+
             labels = [l1,l2]
             
         e1_vertices=(e1[0][1], e1[1][1])
         e2_vertices=(e2[0][1], e2[1][1])
+        # Get node indices ...
         e1 = [i for (i,n) in enumerate(graph.nodes()) if n[1] in e1_vertices]
         e2 = [i for (i,n) in enumerate(graph.nodes()) if n[1] in e2_vertices]
         

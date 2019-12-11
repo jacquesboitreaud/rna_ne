@@ -24,13 +24,13 @@ if (__name__ == "__main__"):
     
     load_model=False
     #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
-    data_dir = '/home/mcb/users/jboitr/data/DeepFRED_data'
+    data_dir = '/home/mcb/users/jboitr/data/DF2'
 
     # config
     feats_dim, h_size, out_size=2, 8, 4 # dims 
-    n_epochs = 100 # epochs to train
+    n_epochs = 1 # epochs to train
     batch_size = 64
-    cutoff =None
+    cutoff =100
 
     save_path, load_path = 'saved_model_w/model1.pth', 'saved_model_w/model1.pth'
     logs_path='saved_model_w/logs1.pth'
