@@ -138,8 +138,10 @@ class rnaDataset(Dataset):
             e1,e2, tmscore = pickle.load(f)
         
         if(self.EVAL):
-            l1=[e[2]['label'] for e in graph.edges(data=True) if e[:1]==e1]
-            l2=[e[2]['label'] for e in graph.edges(data=True) if e[:1]==e2]
+            l1=[e[2]['label'] for e in graph.edges(data=True) if e[:2]==e1]
+            l2=[e[2]['label'] for e in graph.edges(data=True) if e[:2]==e2]
+            l1=[l for l in l1 if l[0]!='S' and l[0]!='B'][0]
+            l2=[l for l in l2 if l[0]!='S' and l[0]!='B'][0]
             labels = [l1,l2]
             
         e1_vertices=(e1[0][1], e1[1][1])

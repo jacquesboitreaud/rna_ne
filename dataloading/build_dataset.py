@@ -86,7 +86,7 @@ if(__name__=='__main__'):
             IO_writer.set_structure(structure)
             
             # Find non backbone graph edges 
-            iter_edges = [e for e in g.edges(data=True) if e[2]['label'] not in ['B35','B53','S35','S53','S55','S33','CWW']]
+            iter_edges = [e for e in g.edges(data=True) if e[2]['label'] in valid_edges]
             
             # Iterate over NON BACKBONE graph edges: 
             for n_a, n_b ,label in iter_edges:
