@@ -252,7 +252,7 @@ class Loader():
         
         else:
             train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                      num_workers=self.num_workers, collate_fn=collate_block)
+                                      num_workers=self.num_workers, collate_fn=collate_block_with_l)
             
             test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
                                  num_workers=self.num_workers, collate_fn=collate_block_with_l)

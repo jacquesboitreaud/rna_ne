@@ -60,7 +60,7 @@ if (__name__ == "__main__"):
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(train_loader):
             print(labels)
             if(batch_idx%10==0):
-                print(batch_idx)
+                print('train batch ',batch_idx)
             
             n= len(labels) # batch size
             tmscores=tmscores.to(device)
@@ -83,7 +83,7 @@ if (__name__ == "__main__"):
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(test_loader):
             print(labels)
             if(batch_idx%10==0):
-                print(batch_idx)
+                print('test batch ',batch_idx)
             
             n= len(labels) # batch size
             tmscores=tmscores.to(device)
