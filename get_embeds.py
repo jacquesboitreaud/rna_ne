@@ -25,7 +25,7 @@ if (__name__ == "__main__"):
     from utils import *
     
     # Dict to get the edge embeddings 
-    edges_d = {'label':[],'z1':[], 'z2':[]}
+    edges_d = {'label':[],'z1':[], 'z2':[], 'split'=[]}
     
     load_model=True
 
@@ -43,7 +43,7 @@ if (__name__ == "__main__"):
                      N_graphs=cutoff, emb_size= 2, 
                      num_workers=0, batch_size=batch_size,EVAL=True)
     N_edge_types = loaders.num_edge_types
-    _, _, test_loader = loaders.get_data()
+    train_loader, _, test_loader = loaders.get_data()
     
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -55,6 +55,31 @@ if (__name__ == "__main__"):
     model.eval()
     t_loss=0
     with torch.no_grad():
+        
+        # get some from training set 
+        for batch_idx, (graph, edges, tmscores,labels) in enumerate(train_loader):
+            print(labels)
+            if(batch_idx%10==0):
+                print(batch_idx)
+            
+            n= len(labels) # batch size
+            tmscores=tmscores.to(device)
+            graph=send_graph_to_device(graph,device)
+            z_e1, z_e2 = model(graph, edges)
+            
+            # For loop over batch
+            for i in range(n):
+                # edge 1
+                edges_d['label'].append(labels[i][0])
+                edges_d['z1'].append(z_e1[i][0].item())
+                edges_d['z2'].append(z_e1[i][1].item())
+                edges_d['split'].append('train')
+                # edge 2
+                edges_d['label'].append(labels[i][1])
+                edges_d['z1'].append(z_e2[i][0].item())
+                edges_d['split'].append('train')
+        
+        # get some from test set 
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(test_loader):
             print(labels)
             if(batch_idx%10==0):
@@ -71,10 +96,12 @@ if (__name__ == "__main__"):
                 edges_d['label'].append(labels[i][0])
                 edges_d['z1'].append(z_e1[i][0].item())
                 edges_d['z2'].append(z_e1[i][1].item())
+                edges_d['split'].append('test')
                 # edge 2
                 edges_d['label'].append(labels[i][1])
                 edges_d['z1'].append(z_e2[i][0].item())
                 edges_d['z2'].append(z_e2[i][1].item())
+                edges_d['split'].append('test')
                 
             df = pd.DataFrame.from_dict(edges_d)
             print(df.shape)

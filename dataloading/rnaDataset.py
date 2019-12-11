@@ -226,12 +226,17 @@ class Loader():
         np.random.seed(0)
         split_train, split_valid = 0.8, 0.9
         train_index, valid_index = int(split_train * n), int(split_valid * n)
-        
+
+
         train_indices = indices[:train_index]
         valid_indices = indices[train_index:valid_index]
         test_indices = indices[valid_index:]
         
-        train_set = Subset(self.dataset, train_indices)
+        if(self.EVAL):
+            train_set = Subset(self.dataset, train_indices[:1000]) # select just a small subset
+        else:
+            train_set = Subset(self.dataset, train_indices)
+            
         valid_set = Subset(self.dataset, valid_indices)
         test_set = Subset(self.dataset, test_indices)
         print(f"Train set contains {len(train_set)} samples")
@@ -246,8 +251,11 @@ class Loader():
             return train_loader, valid_loader, 0
         
         else:
+            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
+                                      num_workers=self.num_workers, collate_fn=collate_block)
+            
             test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
                                  num_workers=self.num_workers, collate_fn=collate_block_with_l)
 
 
-            return 0,0, test_loader
+            return train_loader,0, test_loader
