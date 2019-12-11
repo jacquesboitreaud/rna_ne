@@ -89,7 +89,8 @@ if(__name__=='__main__'):
             iter_edges = [e for e in g.edges(data=True) if e[2]['label'] in valid_edges]
             
             # Iterate over NON BACKBONE graph edges: 
-            for n_a, n_b ,label in iter_edges:
+            for e in iter_edges:
+                    n_a,n_b, label1 = e
                     nt_a, nt_b = nodes[n_a]['nucleotide'], nodes[n_b]['nucleotide']
                     pos_a, pos_b = int(nt_a.pos), int(nt_b.pos)
                     nodepair_counter+=1
@@ -105,7 +106,8 @@ if(__name__=='__main__'):
                     IO_writer.save('tmp/pdb_1.pdb', selectResidues(pdb_1))
                     
                     #Iterate over edges again : 
-                    for n_c, n_d ,label in iter_edges:
+                    for e2 in iter_edges:
+                        n_c,n_d, label2 = e2
                         if(random()>0.5 or (n_c==n_a and n_d==n_b)):
                             next
                         else:
@@ -140,8 +142,7 @@ if(__name__=='__main__'):
                                 #Save edges, subgraph and tmscore
                                 filename=pdbid+'_'+str(nodepair_counter)+'.pickle'
                                 with open(os.path.join(savedir,filename),'wb') as f:
-                                    pickle.dump(graph_chunk,f)
-                                    pickle.dump([(n_a, n_b),(n_c,n_d), tmscore],f)
+                                    pickle.dump((graph_chunk,e1,e2, tmscore),f)
                                     #print(tmscore)
                                     TMS.append(tmscore)
                                     
