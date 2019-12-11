@@ -103,11 +103,11 @@ def Loss(z_e1,z_e2, tmscores, v=False):
     predicted_K= torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
     
     #true_K = 5*(1-tmscores) # linear scaling ! 
-    true_K = tmscores.pow_(-2) # 1/ tm squared !  
+    true_K = tmscores.pow_(-1) # 1/ tm squared !  
     if(v):
         print('Predicted K: ', predicted_K)
         print('True K: ', true_K)
-    loss = torch.sum(torch.sqrt((predicted_K-true_K)**2)) 
+    loss = torch.mean(torch.sqrt((predicted_K-true_K)**2)) 
         
     return loss
 

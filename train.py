@@ -81,12 +81,12 @@ if (__name__ == "__main__"):
             b_loss.backward()
             #clip.clip_grad_norm_(model.parameters(),1)
             optimizer.step()
-            t_loss+=b_loss.item()/n # per item 
+            t_loss+=b_loss.item() # per item 
             #logs and monitoring
             if batch_idx % 10 == 0:
                 # log
                 print('ep {}, batch {}, loss per item: {:.2f} '.format(epoch, 
-                      batch_idx, b_loss.item()/n))
+                      batch_idx, b_loss.item()))
                 
         # End of training pass : add log to logs dict
         logs_dict['train_loss'].append(t_loss/len(train_loader))
@@ -101,7 +101,7 @@ if (__name__ == "__main__"):
                 graph=send_graph_to_device(graph,device)
                 tmscores=tmscores.to(device)
                 z_e1, z_e2 = model(graph, edges)
-                t_loss += Loss(z_e1,z_e2, tmscores).item()/n # per item loss 
+                t_loss += Loss(z_e1,z_e2, tmscores).item() # per item loss 
                 
             print(f'Validation loss at epoch {epoch}, per item: {t_loss/len(test_loader)}')
             logs_dict['val_loss'].append(t_loss/len(test_loader))
