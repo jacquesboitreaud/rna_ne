@@ -57,7 +57,7 @@ if(__name__=='__main__'):
     data_dict={}
     TMS=[]
     
-    k=2 # Number of hops allowed to be counted in neighborhood
+    k=1 # Number of hops allowed to be counted in neighborhood
     
     faces = ['W', 'S', 'H']
     orientations = ['C', 'T']
@@ -145,6 +145,7 @@ if(__name__=='__main__'):
                                     pickle.dump((graph_chunk,e1,e2, tmscore),f)
                                     #print(tmscore)
                                     TMS.append(tmscore)
+                                    print(tmscore)
                                     
             # If the structure was successfully processed
             cpt+=1  
