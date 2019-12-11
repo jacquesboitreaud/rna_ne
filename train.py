@@ -85,11 +85,11 @@ if (__name__ == "__main__"):
             #logs and monitoring
             if batch_idx % 10 == 0:
                 # log
-                print('ep {}, batch {}, loss : {:.2f} '.format(epoch, 
+                print('ep {}, batch {}, loss per item: {:.2f} '.format(epoch, 
                       batch_idx, b_loss.item()/n))
                 
         # End of training pass : add log to logs dict
-        logs_dict['train_loss'].append(t_loss/(n*len(train_loader)))
+        logs_dict['train_loss'].append(t_loss/len(train_loader))
         
         # Validation pass
         model.eval()
