@@ -46,9 +46,12 @@ if (__name__ == "__main__"):
             #print(labels)
             if(batch_idx%10==0):
                 print('train batch ',batch_idx)
+                np.save('distances.npy',distances['target'])
             
             tmscores=list(tmscores.numpy())
             distances['target']+=tmscores
+            
+
 
         # get some from test set 
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(test_loader):
@@ -58,7 +61,8 @@ if (__name__ == "__main__"):
             
             tmscores=list(tmscores.numpy())
             distances['target']+=tmscores
-                
+            
         df = pd.DataFrame.from_dict(distances)
         print(df.shape)
         df.to_csv('tmscores.csv')
+                
