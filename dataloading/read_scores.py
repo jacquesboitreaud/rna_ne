@@ -24,7 +24,6 @@ import numpy as np
 
 if (__name__ == "__main__"):
     sys.path.append("dataloading")
-    from rgcn import Model, Loss
     from rnaDataset import rnaDataset, Loader
     from utils import *
     
