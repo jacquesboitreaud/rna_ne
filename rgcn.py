@@ -80,7 +80,12 @@ class Model(nn.Module):
         :return:
         """
         true_K = 5*(1-tmscores)
-        predicted_K = torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1))
+        predicted_K = torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
+        true_K=true_K.cpu()
+        predicted_K= predicted_K.cpu()
+        
+        #print(true_K)
+        #print(predicted_K)
         
         fig, (ax1, ax2) = plt.subplots(1, 2)
         sns.heatmap(true_K.detach().numpy(), vmin=0, vmax=1, ax=ax1, square=True, cbar=False)
@@ -95,8 +100,11 @@ class Model(nn.Module):
 def Loss(z_e1,z_e2, tmscores):
     # Takes batches graph and labels, computes loss 
     #print('Two edges embeddings are ', z_e1,z_e2)
-    
-    loss = torch.sum((torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1))-5*(1-tmscores))**2) 
+    predicted_K= torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
+    true_K = 5*(1-tmscores)
+    print('Predicted K: ', predicted_K)
+    print('True K: ', true_K)
+    loss = torch.sum((predicted_K-true_K)**2) 
         
     return loss
 

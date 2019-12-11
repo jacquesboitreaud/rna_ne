@@ -29,8 +29,8 @@ if (__name__ == "__main__"):
     # config
     feats_dim, h_size, out_size=2, 8, 4 # dims 
     n_epochs = 30 # epochs to train
-    batch_size = 64
-    cutoff =100
+    batch_size =4
+    cutoff =None
 
     save_path, load_path = 'saved_model_w/model1.pth', 'saved_model_w/model1.pth'
     logs_path='saved_model_w/logs1.npy'
@@ -74,6 +74,8 @@ if (__name__ == "__main__"):
             graph=send_graph_to_device(graph,device)
             tmscores=tmscores.to(device)
             z_e1, z_e2 = model(graph, edges)
+            
+            model.draw_rec(z_e1,z_e2, tmscores)
             
             #Compute loss term for each elemt in batch
             b_loss = Loss(z_e1,z_e2, tmscores)
