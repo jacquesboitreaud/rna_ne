@@ -58,7 +58,7 @@ if (__name__ == "__main__"):
         
         # get some from training set 
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(train_loader):
-            print(labels)
+            #print(labels)
             if(batch_idx%10==0):
                 print('train batch ',batch_idx)
             
@@ -77,11 +77,12 @@ if (__name__ == "__main__"):
                 # edge 2
                 edges_d['label'].append(labels[i][1])
                 edges_d['z1'].append(z_e2[i][0].item())
+                edges_d['z2'].append(z_e2[i][1].item())
                 edges_d['split'].append('train')
         
         # get some from test set 
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(test_loader):
-            print(labels)
+            #print(labels)
             if(batch_idx%10==0):
                 print('test batch ',batch_idx)
             
