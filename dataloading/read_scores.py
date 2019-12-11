@@ -36,7 +36,7 @@ if (__name__ == "__main__"):
     #Load train set and test set
     loaders = Loader(path= data_dir,
                      N_graphs=None, emb_size= 2, 
-                     num_workers=8, batch_size=batch_size,EVAL=True)
+                     num_workers=8, batch_size=128,EVAL=True)
     N_edge_types = loaders.num_edge_types
     train_loader, _, test_loader = loaders.get_data()
     with torch.no_grad():
