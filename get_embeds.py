@@ -60,16 +60,13 @@ if (__name__ == "__main__"):
             if(batch_idx%10==0):
                 print(batch_idx)
             
+            n= len(labels) # batch size
             tmscores=tmscores.to(device)
             graph=send_graph_to_device(graph,device)
             z_e1, z_e2 = model(graph, edges)
             
-            #z_e1=z_e1.cpu().detach().numpy()
-            #z_e2=z_e1.cpu().detach().numpy()
-            #print(labels)
-            
             # For loop over batch
-            for i in range(batch_size):
+            for i in range(n):
                 # edge 1
                 edges_d['label'].append(labels[i][0])
                 edges_d['z1'].append(z_e1[i][0].item())
