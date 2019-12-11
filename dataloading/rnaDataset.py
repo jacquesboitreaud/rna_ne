@@ -54,6 +54,28 @@ def collate_block(samples):
     
     return batched_graph, edge_idces, torch.tensor(targets).view(-1,1)
 
+def collate_block_with_l(samples):
+    # Collates samples into a batch
+    # The input `samples` is a list of pairs
+    #  (graph, label).
+    graphs, edges, targets, labels = map(list, zip(*samples))
+    batched_graph = dgl.batch(graphs)
+    
+    bnn = batched_graph.batch_num_nodes
+    N = len(bnn) # batch size
+    edge_idces = torch.zeros((N,4), dtype=torch.long)
+    for i in range(N):
+        edge_idces[:,0] = torch.tensor([sum(bnn[:i]) + edges[i][0][0] for i in range(N)]) 
+        # source of e1
+        edge_idces[:,1] = torch.tensor([sum(bnn[:i]) + edges[i][0][1] for i in range(N)]) 
+        # dst of e1
+        edge_idces[:,2] = torch.tensor([sum(bnn[:i]) + edges[i][1][0] for i in range(N)]) 
+        # source of e2
+        edge_idces[:,3] = torch.tensor([sum(bnn[:i]) + edges[i][1][1] for i in range(N)]) 
+        # dst of e2
+    
+    return batched_graph, edge_idces, torch.tensor(targets).view(-1,1),labels
+
 
 class rnaDataset(Dataset):
     """ 
@@ -63,8 +85,10 @@ class rnaDataset(Dataset):
                  N_graphs,
                  emb_size,
                  simplified_edges,
+                 EVAL,
                  debug=False):
         
+        self.EVAL=EVAL
         self.path = rna_graphs_path
         if(N_graphs!=None):
             self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number
@@ -112,6 +136,11 @@ class rnaDataset(Dataset):
         with open(os.path.join(self.path, self.all_graphs[idx]),'rb') as f:
             graph = pickle.load(f)
             e1,e2, tmscore = pickle.load(f)
+        
+        if(self.EVAL):
+            l1=[e[2]['label'] for e in graph.edges(data=True) if e[:1]==e1]
+            l2=[e[2]['label'] for e in graph.edges(data=True) if e[:1]==e2]
+            labels = [l1,l2]
             
         e1_vertices=(e1[0][1], e1[1][1])
         e2_vertices=(e2[0][1], e2[1][1])
@@ -134,7 +163,10 @@ class rnaDataset(Dataset):
         
         g_dgl.ndata['h'] = torch.ones((g_dgl.number_of_nodes(), self.emb_size)) # nodes embeddings 
         
-        return g_dgl,(e1,e2), tmscore
+        if(self.EVAL):
+            return g_dgl,(e1,e2), tmscore, labels
+        else:
+            return g_dgl,(e1,e2), tmscore
     
     def _get_edge_data(self):
         """
@@ -179,6 +211,7 @@ class Loader():
         self.dataset = rnaDataset(rna_graphs_path=path,
                                   N_graphs= N_graphs,
                                   emb_size=emb_size,
+                                  EVAL=EVAL,
                                   debug=debug,
                                   simplified_edges=simplified)
         self.num_edge_types = self.dataset.num_edge_types
@@ -213,7 +246,7 @@ class Loader():
         
         else:
             test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
-                                 num_workers=self.num_workers, collate_fn=collate_block)
+                                 num_workers=self.num_workers, collate_fn=collate_block_with_l)
 
 
             return 0,0, test_loader
