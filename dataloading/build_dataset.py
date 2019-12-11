@@ -89,8 +89,8 @@ if(__name__=='__main__'):
             iter_edges = [e for e in g.edges(data=True) if e[2]['label'] in valid_edges]
             
             # Iterate over NON BACKBONE graph edges: 
-            for e in iter_edges:
-                    n_a,n_b, label1 = e
+            for e1 in iter_edges:
+                    n_a,n_b, label1 = e1
                     nt_a, nt_b = nodes[n_a]['nucleotide'], nodes[n_b]['nucleotide']
                     pos_a, pos_b = int(nt_a.pos), int(nt_b.pos)
                     nodepair_counter+=1
