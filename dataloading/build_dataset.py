@@ -45,7 +45,7 @@ if(LOCAL):
     pdb_dir = "C:/Users/jacqu/Documents/databases/rcsb_pdb"
 else:
     gr_dir="../../data/RNA_Graphs"
-    savedir = '../../data/DeepFRED_data'
+    savedir = '../../data/DF2'
     pdb_dir = '../../data/rcsb_pdb'
 
 if(__name__=='__main__'):
