@@ -25,7 +25,7 @@ if (__name__ == "__main__"):
     from utils import *
     
     # Dict to get the edge embeddings 
-    edges_d = {'label':[],'z1':[], 'z2':[], 'split'=[]}
+    edges_d = {'label':[],'z1':[], 'z2':[], 'split':[]}
     
     load_model=True
 
