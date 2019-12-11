@@ -31,12 +31,12 @@ if (__name__ == "__main__"):
 
     # config
 
-    batch_size = 4
+    batch_size = 64
     load_path= 'saved_model_w/model1.pth'
-    #data_dir = '/home/mcb/users/jboitr/data/DF2'
-    data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
+    data_dir = '/home/mcb/users/jboitr/data/DF2'
+    #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
     
-    cutoff=4
+    cutoff=None
     
     #Load train set and test set
     loaders = Loader(path= data_dir,
@@ -67,7 +67,7 @@ if (__name__ == "__main__"):
             graph=send_graph_to_device(graph,device)
             z_e1, z_e2 = model(graph, edges)
             
-            model.draw_rec(z_e1,z_e2, tmscores)
+            #model.draw_rec(z_e1,z_e2, tmscores)
             
             # For loop over batch
             for i in range(n):
@@ -93,7 +93,7 @@ if (__name__ == "__main__"):
             graph=send_graph_to_device(graph,device)
             z_e1, z_e2 = model(graph, edges)
             
-            model.draw_rec(z_e1,z_e2, tmscores)
+            #model.draw_rec(z_e1,z_e2, tmscores)
             
             # For loop over batch
             for i in range(n):
