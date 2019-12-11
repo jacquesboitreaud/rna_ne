@@ -91,6 +91,8 @@ if (__name__ == "__main__"):
             graph=send_graph_to_device(graph,device)
             z_e1, z_e2 = model(graph, edges)
             
+            model.draw_rec(z_e1,z_e2, tmscores)
+            
             # For loop over batch
             for i in range(n):
                 # edge 1
