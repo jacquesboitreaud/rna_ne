@@ -69,12 +69,12 @@ if (__name__ == "__main__"):
             for i in range(batch_size):
                 # edge 1
                 edges_d['label'].append(labels[i][0])
-                edges_d['z1'].append(z_e1[i][0])
-                edges_d['z2'].append(z_e1[i][1])
+                edges_d['z1'].append(z_e1[i][0].item())
+                edges_d['z2'].append(z_e1[i][1].item())
                 # edge 2
                 edges_d['label'].append(labels[i][1])
-                edges_d['z1'].append(z_e2[i][0])
-                edges_d['z2'].append(z_e2[i][1])
+                edges_d['z1'].append(z_e2[i][0].item())
+                edges_d['z2'].append(z_e2[i][1].item())
                 
             df = pd.DataFrame.from_dict(edges_d)
             df.to_csv('edge_embeddings.csv')
