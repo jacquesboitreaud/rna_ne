@@ -107,7 +107,7 @@ def Loss(z_e1,z_e2, tmscores, v=False):
     if(v):
         print('Predicted K: ', predicted_K)
         print('True K: ', true_K)
-    loss = torch.sum((predicted_K-true_K)**2) 
+    loss = torch.sum(torch.sqrt((predicted_K-true_K)**2)) 
         
     return loss
 
