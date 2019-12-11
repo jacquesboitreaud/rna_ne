@@ -33,12 +33,14 @@ if (__name__ == "__main__"):
 
     batch_size = 64
     load_path= 'saved_model_w/model1.pth'
-    data_dir = '/home/mcb/users/jboitr/data/DeepFRED_data'
+    data_dir = '/home/mcb/users/jboitr/data/DF2'
     #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
+    
+    cutoff=100
     
     #Load train set and test set
     loaders = Loader(path= data_dir,
-                     N_graphs=None, emb_size= 2, 
+                     N_graphs=cutoff, emb_size= 2, 
                      num_workers=0, batch_size=batch_size,EVAL=True)
     N_edge_types = loaders.num_edge_types
     _, _, test_loader = loaders.get_data()
@@ -54,6 +56,7 @@ if (__name__ == "__main__"):
     t_loss=0
     with torch.no_grad():
         for batch_idx, (graph, edges, tmscores,labels) in enumerate(test_loader):
+            print(labels)
             if(batch_idx%10==0):
                 print(batch_idx)
             
