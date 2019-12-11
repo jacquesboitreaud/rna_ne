@@ -95,8 +95,6 @@ if (__name__ == "__main__"):
         model.eval()
         t_loss = 0
         with torch.no_grad():
-            print('len of test loader is', len(test_loader))
-            print('len of train loader is', len(train_loader))
             for batch_idx, (graph, edges, tmscores) in enumerate(test_loader):
                 
                 n = tmscores.shape[0] # batch size
