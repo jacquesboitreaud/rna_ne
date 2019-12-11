@@ -96,7 +96,7 @@ def Loss(z_e1,z_e2, tmscores):
     # Takes batches graph and labels, computes loss 
     #print('Two edges embeddings are ', z_e1,z_e2)
     
-    loss = torch.sum((torch.sqrt(torch.sum((z_e1-z_e2)**2),dim=1)-5*(1-tmscores))**2) 
+    loss = torch.sum((torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1))-5*(1-tmscores))**2) 
         
     return loss
 
