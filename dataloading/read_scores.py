@@ -7,13 +7,18 @@ Created on Mon Dec  9 14:10:02 2019
 
 import os 
 import pickle
+import numpy as np
 
 
-path = '/home/mcb/users/jboitr/data/DeepFRED_data'
-
+path = '/home/mcb/users/jboitr/data/DF2'
+tms=[]
+cpt=0
 for f in os.listdir(path):
   with open(os.path.join(path,f),'rb') as f:
-        chunk = pickle.load(f)
-        n_a, n_b, tmscore= pickle.load(f)
-        if(tmscore<1):
-            print(tmscore)
+        chunk,n_a, n_b, tmscore = pickle.load(f)
+        if(cpt%100==0):
+            print(cpt)
+        tms.append(tmscore)
+        cpt+=1
+        
+np.save('tmdist.npy',tms)
