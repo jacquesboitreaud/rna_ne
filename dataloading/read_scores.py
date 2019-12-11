@@ -35,7 +35,7 @@ if (__name__ == "__main__"):
     
     #Load train set and test set
     loaders = Loader(path= data_dir,
-                     N_graphs=cutoff, emb_size= 2, 
+                     N_graphs=None, emb_size= 2, 
                      num_workers=8, batch_size=batch_size,EVAL=True)
     N_edge_types = loaders.num_edge_types
     train_loader, _, test_loader = loaders.get_data()
