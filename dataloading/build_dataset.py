@@ -66,6 +66,8 @@ if(__name__=='__main__'):
     
     for pickle_id in os.listdir(gr_dir):
         pdbid = pickle_id[:-7]
+        if(pdbid=='2uuc'):
+            next
         # Dict for RMSD
         distances={}
         print(f'Reading {pdbid}')
