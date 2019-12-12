@@ -10,13 +10,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-k=4
 
-tm = np.load(f'../dataloading/final_dist.npy', allow_pickle=True)
-tm=list(tm)
+df=pd.read_csv('tmscores.csv')
 
-sns.distplot(tm, kde=True, norm_hist=True, bins=20)
-plt.xlabel('TM score')
-plt.xlim(0,1)
+targets = [t.strip('[') for t in df['target']]
+targets = [t.strip(']') for t in targets]
+targets.append('0.004')
+targets = np.array([float(t) for t in targets])
+
+targets=1/(targets)
+
+sns.distplot(targets, kde=True, norm_hist=True, bins=20)
+plt.xlabel('1/TMscore')
 plt.ylabel('density')
-plt.title(f'k={k}')
