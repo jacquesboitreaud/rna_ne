@@ -33,7 +33,7 @@ if (__name__ == "__main__"):
     # config
 
     batch_size = 128
-    load_path= 'saved_model_w/model1.pth'
+    load_path= 'saved_model_w/model0.pth'
     data_dir = '/home/mcb/users/jboitr/data/DF2'
     #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
     
@@ -90,5 +90,5 @@ if (__name__ == "__main__"):
             df = pd.DataFrame.from_dict(edges_d)
             dfres = pd.DataFrame.from_dict(residuals)
             print(df.shape)
-            df.to_csv('edge_embeddings.csv')
-            dfres.to_csv('resi.csv')
+            df.to_csv('edge_embeddings0.csv')
+            dfres.to_csv('resi0.csv')
