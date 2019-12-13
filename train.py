@@ -9,7 +9,7 @@ Instantiates + trains gcn model
 
 """
 import sys
-import random
+import numpy as np
 import pickle
 import torch
 import torch.utils.data
@@ -27,7 +27,7 @@ if (__name__ == "__main__"):
     data_dir = '/home/mcb/users/jboitr/data/DF2'
 
     # config
-    feats_dim, h_size, out_size=2, 2, 2 # dims 
+    feats_dim, h_size, out_size=2, 4, 4 # dims 
     n_epochs = 30 # epochs to train
     batch_size = 64
     cutoff =300
@@ -82,6 +82,10 @@ if (__name__ == "__main__"):
             clip.clip_grad_norm_(model.parameters(),1)
             optimizer.step()
             t_loss+=b_loss.item() # per item 
+            
+            if(np.isnan(b_loss.item)):
+                print('Nan loss')
+                sys.exit()
             #logs and monitoring
             if batch_idx % 10 == 0:
                 # log
