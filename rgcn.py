@@ -103,7 +103,7 @@ def Loss(z_e1,z_e2, tmscores, v=False):
     predicted_K= torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
     
     #true_K = 5*(1-tmscores) # linear scaling ! 
-    true_K = (tmscores+0.01).pow_(-1) # 1/ tm squared !  
+    true_K = (tmscores+0.05).pow_(-1) # 1/ tm squared !  
     if(v):
         print('Predicted K: ', predicted_K)
         print('True K: ', true_K)
@@ -117,6 +117,6 @@ def Residuals(z_e1,z_e2, tmscores):
     predicted_K= torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
     
     #true_K = 5*(1-tmscores) # linear scaling ! 
-    true_K = (tmscores+0.01).pow_(-1) # 1/ tm squared !  
+    true_K = (tmscores+0.05).pow_(-1) # 1/ tm squared !  
     return predicted_K - true_K
 
