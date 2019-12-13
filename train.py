@@ -27,7 +27,7 @@ if (__name__ == "__main__"):
     data_dir = '/home/mcb/users/jboitr/data/DF2'
 
     # config
-    feats_dim, h_size, out_size=2, 8, 4 # dims 
+    feats_dim, h_size, out_size=2, 2, 2 # dims 
     n_epochs = 30 # epochs to train
     batch_size = 64
     cutoff =None

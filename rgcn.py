@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 class Model(nn.Module):
     # Computes embeddings for all nodes
     # No features
-    def __init__(self, features_dim, h_dim, out_dim , num_rels, num_bases=-1, num_hidden_layers=2):
+    def __init__(self, features_dim, h_dim, out_dim , num_rels, num_bases=-1, num_hidden_layers=0):
         super(Model, self).__init__()
         
         self.features_dim, self.h_dim, self.out_dim = features_dim, h_dim, out_dim
