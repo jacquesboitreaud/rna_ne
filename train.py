@@ -79,7 +79,7 @@ if (__name__ == "__main__"):
             b_loss = Loss(z_e1,z_e2, tmscores)
             optimizer.zero_grad()
             b_loss.backward()
-            clip.clip_grad_norm_(model.parameters(),1)
+            clip.clip_grad_norm_(model.parameters(),10)
             optimizer.step()
             t_loss+=b_loss.item() # per item 
             
