@@ -22,7 +22,7 @@ if (__name__ == "__main__"):
     from rnaDataset import rnaDataset, Loader
     from utils import *
     
-    load_model=False
+    load_model=True
     #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
     data_dir = '/home/mcb/users/jboitr/data/DF2'
 
