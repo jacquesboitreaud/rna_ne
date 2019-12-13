@@ -83,7 +83,7 @@ if (__name__ == "__main__"):
             optimizer.step()
             t_loss+=b_loss.item() # per item 
             
-            if(np.isnan(b_loss.item)):
+            if(np.isnan(b_loss.item())):
                 print('Nan loss')
                 sys.exit()
             #logs and monitoring
