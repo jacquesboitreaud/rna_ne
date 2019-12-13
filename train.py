@@ -48,7 +48,7 @@ if (__name__ == "__main__"):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     parallel=False
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, num_bases=-1, num_hidden_layers=2).to(device)
+                  num_rels=N_edge_types, num_bases=-1, num_hidden_layers=0).to(device)
     if(load_model):
         model.load_state_dict(torch.load(load_path))
     if (parallel): #torch.cuda.device_count() > 1 and
