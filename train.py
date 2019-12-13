@@ -18,7 +18,7 @@ import torch.nn.utils.clip_grad as clip
 import torch.nn.functional as F
 if (__name__ == "__main__"):
     sys.path.append("./dataloading")
-    from rgcn import Model, Loss
+    from rgcn import Model, Loss, Residuals
     from rnaDataset import rnaDataset, Loader
     from utils import *
     
@@ -30,7 +30,7 @@ if (__name__ == "__main__"):
     feats_dim, h_size, out_size=2, 2, 2 # dims 
     n_epochs = 30 # epochs to train
     batch_size = 64
-    cutoff =None
+    cutoff =300
 
     save_path, load_path = 'saved_model_w/model1.pth', 'saved_model_w/model1.pth'
     logs_path='saved_model_w/logs1.npy'
@@ -87,6 +87,10 @@ if (__name__ == "__main__"):
                 # log
                 print('ep {}, batch {}, loss per item: {:.2f} '.format(epoch, 
                       batch_idx, b_loss.item()))
+            if(batch_idx==0):
+                # Watch distance distribution fitting 
+                diff = Residuals(z_e1,z_e2,tmscores)
+                print(diff)
                 
         # End of training pass : add log to logs dict
         logs_dict['train_loss'].append(t_loss/len(train_loader))

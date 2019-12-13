@@ -111,12 +111,12 @@ def Loss(z_e1,z_e2, tmscores, v=False):
         
     return loss
 
-def resi(z_e1,z_e2, tmscores):
+def Residuals(z_e1,z_e2, tmscores):
     # Takes batches graph and labels, computes loss 
     #print('Two edges embeddings are ', z_e1,z_e2)
     predicted_K= torch.sqrt(torch.sum((z_e1-z_e2)**2,dim=1)).view(-1,1)
     
     #true_K = 5*(1-tmscores) # linear scaling ! 
     true_K = (tmscores+0.01).pow_(-1) # 1/ tm squared !  
-    return predicted_K, true_K
+    return predicted_K - true_K
 
