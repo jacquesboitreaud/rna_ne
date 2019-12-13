@@ -22,12 +22,12 @@ if (__name__ == "__main__"):
     from rnaDataset import rnaDataset, Loader
     from utils import *
     
-    load_model=True
+    load_model=False
     #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
     data_dir = '/home/mcb/users/jboitr/data/DF2'
 
     # config
-    feats_dim, h_size, out_size=2, 4, 4 # dims 
+    feats_dim, h_size, out_size=2, 16, 4 # dims 
     n_epochs = 30 # epochs to train
     batch_size = 64
     cutoff =300
