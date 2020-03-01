@@ -1,2 +1,2 @@
 # DeepFRED
-3D-aware basepairs embeddings for the annotation of RNA graphs
+Deeply learning 3D-aware basepairs embeddings for RNA secondary structure graphs
