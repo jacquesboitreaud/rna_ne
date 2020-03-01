@@ -16,10 +16,10 @@ import torch.utils.data
 from torch import nn, optim
 import torch.nn.utils.clip_grad as clip
 import torch.nn.functional as F
+
 if (__name__ == "__main__"):
-    sys.path.append("./dataloading")
     from rgcn import Model, Loss, Residuals
-    from rnaDataset import rnaDataset, Loader
+    from dataloading.rnaDataset import rnaDataset, Loader
     from utils import *
     
     load_model=False

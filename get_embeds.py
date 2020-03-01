@@ -19,9 +19,8 @@ import pandas as pd
 import numpy as np
 
 if (__name__ == "__main__"):
-    sys.path.append("dataloading")
     from rgcn import Model, Loss, resi
-    from rnaDataset import rnaDataset, Loader
+    from dataloading.rnaDataset import rnaDataset, Loader
     from utils import *
     
     # Dict to get the edge embeddings 

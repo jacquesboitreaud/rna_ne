@@ -22,10 +22,11 @@ from rna_classes import *
 from Bio.SVDSuperimposer import SVDSuperimposer
 import sys
 if __name__ == "__main__":
-    sys.path.append("..")
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(os.path.join(script_dir, '..'))
 
-from pdb_utils import *
-from graph_process import *
+from dataloading.pdb_utils import *
+from dataloading.graph_process import *
 
 # Hyperparams 
 gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
