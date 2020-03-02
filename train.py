@@ -8,7 +8,9 @@ Loads training set of edge pairs.
 Instantiates + trains gcn model 
 
 """
-import sys
+
+import argparse
+import sys, os
 import numpy as np
 import pickle
 import torch
@@ -18,29 +20,41 @@ import torch.nn.utils.clip_grad as clip
 import torch.nn.functional as F
 
 if (__name__ == "__main__"):
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    sys.path.append(script_dir)
     from rgcn import Model, Loss, Residuals
     from dataloading.rnaDataset import rnaDataset, Loader
     from utils import *
     
-    load_model=False
-    #data_dir = 'C:/Users/jacqu/Documents/GitHub/data/DeepFRED_data'
-    data_dir = '/home/mcb/users/jboitr/data/DF2'
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/train')
+    parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", type=int, default=100)
+    
+    parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
+    parser.add_argument('--load_model', type=bool, default=False)
+    parser.add_argument('--load_iter', type=int, default=410000)
+    
+    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--batch_size', type=int, default=32)
+    
+    # =======
+
+    args=parser.parse_args()
 
     # config
     feats_dim, h_size, out_size=2, 4, 4 # dims 
-    n_epochs = 100 # epochs to train
-    batch_size = 64
-    cutoff =300
 
-    save_path, load_path = 'saved_model_w/model1.pth', 'saved_model_w/model1.pth'
+    save_path = 'saved_model_w/model1.pth'
     logs_path='saved_model_w/logs1.npy'
     
     #Load train set and test set
-    loaders = Loader(path=data_dir ,
-                     N_graphs=cutoff, emb_size= feats_dim, 
-                     num_workers=8, batch_size=batch_size)
+    loaders = Loader(path=args.train_dir ,
+                     N_graphs=args.cutoff, emb_size= feats_dim, 
+                     num_workers=0, batch_size=args.batch_size)
     
     logs_dict={'train_loss':[],'val_loss':[]}
+    
     N_edge_types = loaders.num_edge_types
     train_loader, test_loader, _ = loaders.get_data()
     
@@ -49,8 +63,9 @@ if (__name__ == "__main__"):
     parallel=False
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
                   num_rels=N_edge_types, num_bases=-1, num_hidden_layers=0).to(device)
-    if(load_model):
-        model.load_state_dict(torch.load(load_path))
+    
+    if(args.load_model):
+        model.load_state_dict(torch.load(args.load_path))
     if (parallel): #torch.cuda.device_count() > 1 and
         print("Start training using ", torch.cuda.device_count(), "GPUs!")
         model = nn.DataParallel(model)
@@ -58,12 +73,12 @@ if (__name__ == "__main__"):
     #Print model summary
     print(model)
     map = ('cpu' if device == 'cpu' else None)
-    torch.manual_seed(1)
+    
     optimizer = optim.Adam(model.parameters())
     #optimizer = optim.Adam(model.parameters(),lr=1e-4, weight_decay=1e-5)
     
     #Train & test
-    for epoch in range(1, n_epochs+1):
+    for epoch in range(1, args.epochs+1):
         print(f'Starting epoch {epoch}')
         model.train()
         t_loss=0

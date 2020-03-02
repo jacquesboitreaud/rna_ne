@@ -20,9 +20,8 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(os.path.join(script_dir, '..'))
 
-from dataloading.pdb_utils import *
-from utils import *
-from rotation import rot 
+    from dataloading.pdb_utils import *
+    from utils import *
 
 def angle(ba,bc):
     """ radians angle between two vectors (numpy array, shape (3,))"""
@@ -31,7 +30,7 @@ def angle(ba,bc):
 
     return angle
 
-def chi(nucleotide, unit = 'rad'):
+def chi_angle(nucleotide, unit = 'rad'):
     # Takes a nucleotide object and returns chi angle (glycosidic-backbone) value (scalar)
     atoms=nucleotide.atoms
     

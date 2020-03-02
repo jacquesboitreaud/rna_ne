@@ -4,9 +4,7 @@ Created on Sat Oct 26 18:06:44 2019
 
 @author: jacqu
 
-Dataset class for pairs of nodes and RNA graphs handling
-
-TODO: Collate block, loader + change paths to files 
+Dataset class for RNA graphs and context handling (v2 project)
 """
 
 import os 
