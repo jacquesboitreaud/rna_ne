@@ -89,7 +89,7 @@ def base_angles(nucleotide, unit = 'rad'):
         c = [a for a in atoms if a.atom_label=='C2'][0]
         
     else:
-        print('!!!! Nucleotide type not handled')
+        print(f'!!!! Nucleotide type not handled: {nucleotide}')
         
     coords = np.zeros((2,3))
     
