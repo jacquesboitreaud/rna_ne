@@ -65,16 +65,16 @@ if __name__ == "__main__":
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
 
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
-    parser.add_argument('--anneal_iter', type=int, default=100) # update learning rate every _ step
+    parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
     parser.add_argument('--log_iter', type=int, default=25) # print loss metrics every _ step
-    parser.add_argument('--save_iter', type=int, default=400) # save model weights every _ step
+    parser.add_argument('--save_iter', type=int, default=1000) # save model weights every _ step
 
      # =======
 
     args=parser.parse_args()
 
     # config
-    feats_dim, h_size, out_size=6, 4, 64 # dims 
+    feats_dim, h_size, out_size=6, 16, 32 # dims 
     
     #Loaders
     # Add debug = True argument to add fake node feature that makes distinction trivial (loss converges immediately)
