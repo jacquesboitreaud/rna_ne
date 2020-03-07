@@ -78,15 +78,18 @@ def base_angles(nucleotide, unit = 'rad'):
         elif a.atom_label =="P":
             P = a
     
-    if (nucleotide.nt in ('G','A')): # Purine, chi = O4'-C1' // N9-C4
+    if (nucleotide.real_nt in ('G','A')): # Purine, chi = O4'-C1' // N9-C4
         
         n = [a for a in atoms if a.atom_label =="N9"][0]
         c = [a for a in atoms if a.atom_label=='C4'][0]
     
-    if (nucleotide.nt in ('U','C')): #Pyrimidine , chi = O4'-C1' // N1-C2
+    elif (nucleotide.real_nt in ('U','C')): #Pyrimidine , chi = O4'-C1' // N1-C2
         
         n = [a for a in atoms if a.atom_label =="N1"][0]
         c = [a for a in atoms if a.atom_label=='C2'][0]
+        
+    else:
+        print('!!!! Nucleotide type not handled')
         
     coords = np.zeros((2,3))
     
