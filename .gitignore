@@ -1,5 +1,6 @@
-data
 __pycache__
-plots
+data
+eval
+runs
 old!
 
