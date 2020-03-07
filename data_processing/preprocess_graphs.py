@@ -94,7 +94,7 @@ if __name__ == "__main__":
                     d['delta'][n]=delta
                     d['gly_base'][n]= gly_base
                     
-                except(IndexError): # missing atom in nucleotide
+                except: # missing atom in nucleotide or 'X' nucleotide : delete 
                     bad_nts.append(n)
                 
             # Remove nodes 
