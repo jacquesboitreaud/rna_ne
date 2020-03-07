@@ -19,6 +19,7 @@ import pickle
 import os 
 import networkx as nx
 import sys
+import argparse
 
 
 if __name__ == "__main__":
@@ -29,10 +30,23 @@ if __name__ == "__main__":
     from data_processing.angles import base_angles
     from data_processing.rna_classes import *
     from data_processing.utils import *
+    
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
+                        type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
+    parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
+                        type=int, default=100)
+    parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
+                        type=str, default="../data/chunks")
+    
+     # =======
 
+    args=parser.parse_args()
+    
     # Hyperparams 
-    gr_dir = "C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs"
-    annot_dir = "../data/chunks"
+    gr_dir = args.graphs_dir
+    annot_dir = args.write_dir
     
     angles = ['chi', 'delta', 'gly_base']
     
@@ -99,6 +113,8 @@ if __name__ == "__main__":
             # Save
             with open(os.path.join(annot_dir,pdb_id),'wb') as f:
                 pickle.dump(G, f)
+                
+    print(f'wrote {cpt} preprocessed graphs to {args.write_dir}')
                 
             
             

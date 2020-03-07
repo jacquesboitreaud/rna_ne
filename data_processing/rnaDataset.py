@@ -29,7 +29,7 @@ from tqdm import tqdm
 # Do Not remove, required for loading pickle rna graphs
 import rna_classes
 from rna_classes import *
-from graph_process import *
+from graph_utils import *
 
 from torch.utils.data import Dataset, DataLoader, Subset
 
