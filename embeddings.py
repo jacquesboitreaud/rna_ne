@@ -65,6 +65,9 @@ if (__name__ == "__main__"):
                      num_workers=0, 
                      batch_size=args.batch_size)
     
+    with open('data/true_edge_map.pickle','wb') as f:
+        pickle.dump(loaders.dataset.true_edge_map, f)
+    
     N_edge_types = loaders.num_edge_types
     train_loader, test_loader, _ = loaders.get_data()
     

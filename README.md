@@ -33,7 +33,7 @@ python embeddings.py -i [directory] -o [write_directory]
 
 ## Visualize learned embeddings for different basepair types 
 
-(TODO)
+To view embeddings in PCA space, colored by true basepair type, run :
 ```
-python eval/visualize_embeddings.py 
+python post/visualize_embeddings.py 
 ```
