@@ -26,7 +26,7 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(os.path.join(script_dir, '..'))
 
-    from data_processing.pdb_utils import *
+    from data_processing.graph_utils import *
     from data_processing.angles import base_angles
     from data_processing.rna_classes import *
     from data_processing.utils import *
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
                         type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
     parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
-                        type=int, default=100)
+                        type=int, default=200)
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     
@@ -63,17 +63,25 @@ if __name__ == "__main__":
             d[a]={} #dict of dicts to store angle values for each node
             
         nt_a, nt_u, nt_g, nt_c = {},{},{},{}
-        if(cpt<100):
+        if(cpt<args.cutoff):
             print(f'Reading {pdb_id}')
-            cpt+=1
             # Load graph  
             g = pickle.load(open(os.path.join(gr_dir,pdb_id), 'rb'))
+            
+            # 1/ Remove dangling nodes from graph 
+            
             nodes =g.nodes(data=True)
             N = g.number_of_nodes()
             
             # Clean edges
             remove_self_edges(g) # Get rid of self edges (not sure its right?)
             g=nx.to_undirected(g)
+            g= dangle_trim(g)
+            N1 = g.number_of_nodes()
+            if(N1!=N):
+                print(f'removed {N-N1} nodes, now {N1}')
+            if(N1==0):
+                continue # empty graph, do not process and do not save 
             
             # Add node features
             bad_nts = [] # nucleotides for which angles raise error 
@@ -111,6 +119,7 @@ if __name__ == "__main__":
             nx.set_node_attributes(G, nt_c, 'C')
             
             # Save
+            cpt+=1
             with open(os.path.join(annot_dir,pdb_id),'wb') as f:
                 pickle.dump(G, f)
                 

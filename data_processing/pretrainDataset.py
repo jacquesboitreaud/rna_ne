@@ -140,6 +140,7 @@ class pretrainDataset(Dataset):
             neg = np.random.randint(self.n)
             with open(os.path.join(self.path, self.all_graphs[neg]),'rb') as f:
                 G_ctx = pickle.load(f)
+            G_ctx = nx.to_undirected(G_ctx)
             N = len(G_ctx.nodes)
             u_neg_idx = np.random.randint(N)
             
@@ -175,7 +176,7 @@ class pretrainDataset(Dataset):
         nx.set_node_attributes(g_ctx, name='anchor', values = is_anchor)
         
         G = nx.to_undirected(G)
-        g_ctx = nx.to_undirected(g_ctx)
+        
         
         # Add Edge types to features 
         if(self.simplified_edges):

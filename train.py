@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=100)
+                        type=int, default=1000)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=16)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=False)
+    parser.add_argument('--fix_seed', action='store_true', default=True)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
@@ -163,11 +163,11 @@ if __name__ == "__main__":
             t_loss.backward()
             
             #Print & log
-            train_ep_loss += t_loss.item()
+            train_ep_loss += t_loss.item()/batch_size
             if total_steps % args.log_iter == 0:
                 figure = draw_rec(dotprod.view(-1,1), labels.view(-1,1))
                 writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
-                writer.add_scalar('batchLoss/train', t_loss.item(), total_steps)
+                writer.add_scalar('batchLoss/train', t_loss.item()/batch_size , total_steps)
                 print('epoch {}, opt. step n°{}, loss {:.2f}'.format(epoch, total_steps, t_loss.item()))
             
             del(t_loss)
@@ -215,7 +215,7 @@ if __name__ == "__main__":
             
                 #Compute loss
                 t_loss, _ = pretrainLoss(h_v, h_anchors, labels, v=False, show = False)
-                test_ep_loss += t_loss.item()
+                test_ep_loss += t_loss.item()/batch_size
                     
         # Epoch logging
         writer.add_scalar('epochLoss/test', test_ep_loss, epoch)

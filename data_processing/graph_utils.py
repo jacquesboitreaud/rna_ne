@@ -46,3 +46,28 @@ def find_node(graph, chain, pos):
         if (n[0] == chain) and (d['nucleotide'].pdb_pos == str(pos)):
             return n
     return None
+
+def dangle_trim(G):
+
+    """
+    Recursively remove dangling nodes from graph.
+    """
+
+    cur_G = G.copy()
+
+    while True:
+        dangles = []
+        for n in cur_G.nodes:
+            # node_deg = degree(i, G, current_nodeset)
+            # print(node_deg)
+            # if node_deg == 2 and is_backbone(n, G):
+            # if cur_G.degree(n) == 1 and is_backbone(n, cur_G) or cur_G.degree(n) == 0:
+            if cur_G.degree(n) == 1  or cur_G.degree(n) == 0:
+                dangles.append(n)
+        if len(dangles) == 0:
+            break
+        else:
+            cur_G.remove_nodes_from(dangles)
+            cur_G = cur_G.copy()
+    return cur_G
+
