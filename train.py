@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Nov  6 18:44:04 2019
-
 @author: jacqu
 
-Graph2Smiles VAE training (RGCN encoder, GRU decoder, teacher forced decoding). 
+Context prediction training on RNA graphs. 
 
-To resume training form a given 
-- iteration saved
-- learning rate
-- beta 
-
-pass corresponding args + load_model = True
-
+!! Only preprocessed RNA graphs should be in 'args.train_dir' (using os.listdir to list graphs)
 
 """
 

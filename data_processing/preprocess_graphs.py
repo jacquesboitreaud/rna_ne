@@ -4,14 +4,17 @@ Created on Sun Nov  3 17:11:42 2019
 
 @author: jacqu
 
-Reads RNA graphs annotated with FR3D edge labels 
-Computes 3D-distance for edge pairs; 
+Reads off-the-shelf RNA graphs (structure using rna_classes.py)
+Preprocesses : 
+    removes dangling nodes 
+    Checks graph not empty
+    computes 3D node features (base angles)
+    adds nucleotide identity as a node feature
 
-Saves processed graph and dict of RMSDs to pickle file in 'annotated_dir'
+Saves valid, non-empty processed graphs to pickle file in 'args.write_dir'
 
-DEBUG: on 6n2v pdb (contains only RNA and ligands)
-
-        
+'cutoff' argument (-c) to specify a fixed number of graphs to process in 'args.graphs_dir'. 
+  
 """
 
 import numpy as np
