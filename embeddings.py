@@ -56,7 +56,6 @@ if (__name__ == "__main__"):
     feats_dim, h_size, out_size=6, 4, 64 # dims 
     
     #Loaders
-    # Add debug = True argument to add fake node feature that makes distinction trivial (loss converges immediately)
     loaders = Loader(path=args.train_dir ,
                      attributes = ['A','U','G','C','chi','gly_base'],
                      N_graphs=args.cutoff, 

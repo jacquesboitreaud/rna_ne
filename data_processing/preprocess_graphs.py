@@ -107,6 +107,7 @@ if __name__ == "__main__":
                     
                 except: # missing atom in nucleotide or 'X' nucleotide : delete 
                     bad_nts.append(n)
+                    print(n)
                 
             # Remove nodes 
             G = g.copy()
