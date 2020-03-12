@@ -3,9 +3,10 @@
 Created on Wed Nov  6 18:44:04 2019
 @author: jacqu
 
-Context prediction training on RNA graphs. 
 
-!! Only preprocessed RNA graphs should be in 'args.train_dir' (using os.listdir to list graphs)
+Magnesium binding with pretrained embeddings 
+
+Trains simple RGCN instance for magnesium binding prediction 
 
 """
 
@@ -26,40 +27,37 @@ from torch.utils.tensorboard import SummaryWriter
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(script_dir)
-    sys.path.append(os.path.join(script_dir,'data_processing'))
+    sys.path.append(os.path.join(script_dir,'tasks_processing'))
+    sys.path.append(os.path.join(script_dir,'..'))
     
-    from model import Model, pretrainLoss, draw_rec
-    from data_processing.pretrainDataset import pretrainDataset, Loader
+    from model import RGCN, classifLoss, draw_rec
+    from tasks_processing.mgDataset import mgDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
     
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
+    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=1000)
+    parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
+                        default=False)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
-    parser.add_argument('--load_iter', type=int, default=410000)
     
-    parser.add_argument('--epochs', type=int, default=1000)
+    parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=16)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=True)
-
-    #Context prediction parameters 
-    parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
-    parser.add_argument('--r1', type=int, default=1) # Context ring inner radius
-    parser.add_argument('--r2', type=int, default=3) # Context out radius
+    parser.add_argument('--layers', type=int, default=2) # nbr of layers in RGCN 
 
     parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
-
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
     parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
-    parser.add_argument('--log_iter', type=int, default=25) # print loss metrics every _ step
+    
+    parser.add_argument('--log_iter', type=int, default=5) # print loss metrics every _ step
     parser.add_argument('--save_iter', type=int, default=1000) # save model weights every _ step
 
      # =======
@@ -67,19 +65,20 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     # config
-    feats_dim, h_size, out_size=6, 16, 32 # dims 
+    feats_dim, h_size, out_size=6, 16, 1 # dims 
     
     #Loaders
-    # Add debug = True argument to add fake node feature that makes distinction trivial (loss converges immediately)
+    if(args.fr3d):
+        print('********** Baseline model training, using FR3D graphs and edgetypes ******')
+    else:
+        print('********** Training model with learned nucleotide embeddings ***********')
     loaders = Loader(path=args.train_dir ,
-                     simplified_edges=True,
-                     radii_params=(args.K,args.r1, args.r2),
+                     true_edges=args.fr3d, # Whether we use true FR3D graphs or embeddings graphs 
                      attributes = ['A','U','G','C','chi','gly_base'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
                      num_workers=0, 
-                     batch_size=args.batch_size, 
-                     fix_seed = args.fix_seed)
+                     batch_size=args.batch_size)
     
     # Tensorboard logging 
     # Writer will output to ./runs/ directory by default
@@ -93,11 +92,9 @@ if __name__ == "__main__":
     device = 'cpu'
     parallel=False
     
-    # Model instance contains GNN and context GNN 
-    layers = int(args.r2-args.r1)
-    assert(layers >0 )
-    model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=-1).to(device).float()
+    # Simple RGCN instance for node classification 
+    model = RGCN(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
+                  num_rels=N_edge_types, num_layers = args.layers, num_bases=-1, pool=False).to(device).float()
 
     if(args.load_model):
         model.load_state_dict(torch.load(args.load_path))
@@ -113,54 +110,35 @@ if __name__ == "__main__":
 
     #Train & test
     model.train()
-    if(args.load_model):
-        total_steps = args.load_iter
-    else:
-        total_steps=0
+    total_steps=0 # nbr of optim steps 
 
     for epoch in range(1, args.epochs+1):
         print(f'Starting epoch {epoch}')
         train_ep_loss, test_ep_loss = 0,0
         
-        for batch_idx, (graph, ctx_graph, u_index, labels) in enumerate(train_loader):
+        for batch_idx, (graph, pdbids) in enumerate(train_loader):
 
             total_steps+=1 # count training steps
             
-
             graph=send_graph_to_device(graph,device)
-            ctx_graph=send_graph_to_device(ctx_graph,device)
 
             # Forward pass
-            model(graph, ctx_graph)
+            model(graph)
             
             # Get node embeddings 
-            graphs = dgl.unbatch(graph)
-            batch_size = len(graphs)
-            
-            h_v = torch.zeros(batch_size,out_size)
-            for k in range(batch_size):
-                h_v[k] = graphs[k].ndata['h'][u_index[k],:]
-            
-            # Get context embedding : average of anchor nodes             
-            h_anchors = torch.zeros_like(h_v)
-            ctx_graphs = dgl.unbatch(ctx_graph)
-            for k in range(len(ctx_graphs)):
-                is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b]
-                h = ctx_graphs[k].ndata['h']
-                h_anchors[k] = torch.mean(h[is_anchor])
-                
-            
+            h = graph.ndata['h'].view(-1,1)
+            labels = graph.ndata['Mg_binding'].float()
             #Compute loss
-            t_loss, dotprod = pretrainLoss(h_v, h_anchors, labels, v=False, show=bool(total_steps%args.log_iter==0))
+            t_loss = classifLoss(h, labels, show=bool(total_steps%args.log_iter==0))
             optimizer.zero_grad()
             t_loss.backward()
             
             #Print & log
-            train_ep_loss += t_loss.item()/batch_size
+            train_ep_loss += t_loss.item()
             if total_steps % args.log_iter == 0:
-                figure = draw_rec(dotprod.view(-1,1), labels.view(-1,1))
+                figure = draw_rec(h.view(-1,1), labels.view(-1,1))
                 writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
-                writer.add_scalar('batchLoss/train', t_loss.item()/batch_size , total_steps)
+                writer.add_scalar('batchLoss/train', t_loss.item()  , total_steps)
                 print('epoch {}, opt. step n°{}, loss {:.2f}'.format(epoch, total_steps, t_loss.item()))
             
             del(t_loss)
@@ -182,33 +160,19 @@ if __name__ == "__main__":
         # Validation pass
         model.eval()
         with torch.no_grad():
-            for batch_idx, (graph, ctx_graph, u_index, labels ) in enumerate(test_loader):
+            for batch_idx, (graph, pdbids ) in enumerate(test_loader):
 
                 graph=send_graph_to_device(graph,device)
-                ctx_graph=send_graph_to_device(ctx_graph,device)
 
                 # Forward pass 
-                model(graph, ctx_graph) 
+                model(graph) 
                 
-                # Get node embeddings 
-                graphs = dgl.unbatch(graph)
-                batch_size = len(graphs)
-                
-                h_v = torch.zeros(batch_size,out_size)
-                for k in range(batch_size):
-                    h_v[k] = graphs[k].ndata['h'][u_index[k],:]
-                
-                # Get context embedding : average of anchor nodes             
-                h_anchors = torch.zeros_like(h_v)
-                ctx_graphs = dgl.unbatch(ctx_graph)
-                for k in range(len(ctx_graphs)):
-                    is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b]
-                    h = ctx_graphs[k].ndata['h']
-                    h_anchors[k] = torch.mean(h[is_anchor])
+                h=graph.ndata['h'].view(-1,1)
+                labels = graph.ndata['Mg_binding'].float()
             
                 #Compute loss
-                t_loss, _ = pretrainLoss(h_v, h_anchors, labels, v=False, show = False)
-                test_ep_loss += t_loss.item()/batch_size
+                t_loss = classifLoss(h, labels, show = False)
+                test_ep_loss += t_loss.item()
                     
         # Epoch logging
         writer.add_scalar('epochLoss/test', test_ep_loss, epoch)

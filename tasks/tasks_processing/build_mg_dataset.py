@@ -15,31 +15,28 @@ import numpy as np
 import pickle 
 import os 
 import networkx as nx
-from rna_classes import *
-from Bio.SVDSuperimposer import SVDSuperimposer
-from Bio.PDB import PDBIO
 import sys
-import subprocess
+import argparse
 
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.join(script_dir, '..'))
-    sys.path.append(os.path.join(script_dir, '../..'))
+    sys.path.append(os.path.join(script_dir, '../data_processing'))
 
     from pdb_utils import *
+    from rna_classes import *
     
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
-                        type=str, default="../../data/chunks")
+                        type=str, default=os.path.join(script_dir,"../data/chunks"))
     parser.add_argument('-o', '--out_dir', help="path to directory to save mg_graphs ", 
-                        type=str, default="../../data/mg_graphs")
+                        type=str, default=os.path.join(script_dir,"data/mg_graphs"))
     parser.add_argument('-c', "--cutoff", help="Distance cutoff for binding sites, in Angstrom", 
                         type=int, default=6)
     
     parser.add_argument('-d', "--binding_sites_dict", help="Path to binding sites dictionary", 
-                        type=str, default='C:/Users/jacqu/Documents/MegaSync Downloads/new_mg_res.p')
+                        type=str, default=os.path.join(script_dir,"data/new_mg_res.p"))
     
     # =======
 
@@ -86,8 +83,7 @@ if __name__ == "__main__":
                     counter +=1
             # Append to node features dict 
             node_feat[n]=is_binding
-        print(f'{counter} binding site nucleotides annotated, {len(s[1][args.cutoff]["rna_res"])} in dict')
-        print(s[1][args.cutoff]['rna_res'])
+        print(f'{counter} binding site nucleotides annotated')
             
         # Add node feature to nx graph 
         nx.set_node_attributes(g,node_feat, name = 'Mg_binding')
