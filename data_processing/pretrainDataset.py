@@ -75,7 +75,7 @@ class pretrainDataset(Dataset):
             np.random.seed(10)
             np.random.shuffle(self.all_graphs)
             
-        self.n=len(self.all_graphs)
+        self.n_graphs=len(self.all_graphs)
         
         # Params for getitem (training samples):
         self.emb_size = emb_size
@@ -98,7 +98,6 @@ class pretrainDataset(Dataset):
             self.edge_map={'B35':0,
                       'B53':0}
         
-        
     def _get_simple_etype(self,label):
         # Returns index of edge type for an edge label
         if(label in ['B35','B53']):
@@ -106,13 +105,15 @@ class pretrainDataset(Dataset):
         else:
             return torch.tensor(1) # Non canonical edges category
             
-    def __len__(self):
-        return self.n
+    def __len__(self): # Number of samples in epoch : should be >> n_graphs (1 sample = 1 node)
+        return self.n_graphs *50
     
     def __getitem__(self, idx):
         
-        # pick a graph (n°idx in the list)
-        with open(os.path.join(self.path, self.all_graphs[idx]),'rb') as f:
+        # pick a graph at random 
+        gidx = np.random.randint(self.n_graphs)
+        
+        with open(os.path.join(self.path, self.all_graphs[gidx]),'rb') as f:
             G = pickle.load(f)
          
         # Pick a node at random : 

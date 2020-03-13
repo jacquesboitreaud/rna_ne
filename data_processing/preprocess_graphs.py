@@ -107,8 +107,8 @@ if __name__ == "__main__":
                     
                 except: # missing atom in nucleotide or 'X' nucleotide : delete 
                     bad_nts.append(n)
-                    if(data['nucleotide'].atoms!=[]):
-                        print('dropping', data['nucleotide'].nt, data['nucleotide'].real_nt, data['nucleotide'].atoms)
+                    #if(data['nucleotide'].atoms!=[]):
+                        #print('dropping', data['nucleotide'].nt, data['nucleotide'].real_nt, data['nucleotide'].atoms)
                 
             # Remove nodes where errors occured 
             G = g.copy()
