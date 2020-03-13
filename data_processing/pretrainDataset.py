@@ -110,6 +110,10 @@ class pretrainDataset(Dataset):
     
     def __getitem__(self, idx):
         
+        #Fix random seed for all other samplings 
+        if(self.fix_seed):
+            np.random.seed(10)
+        
         # pick a graph at random 
         gidx = np.random.randint(self.n_graphs)
         
@@ -123,11 +127,8 @@ class pretrainDataset(Dataset):
         # Selected node has idx u_idx in sorted(G.nodes) // coherent with dgl reindexing
         u = sorted(G.nodes)[u_idx]
         
-        # Random sample positive or negative context 
+        # Random sample positive or negative context 'deterministic but 'idx' unused elsewhere
         r = int(idx%2==0)
-        # Fix random seed for all other samplings 
-        if(self.fix_seed):
-            np.random.seed(10)
         
         if(r>0.5): # positive context 
             g_ctx = nx.Graph(G)
@@ -138,7 +139,7 @@ class pretrainDataset(Dataset):
             anchor_nodes = [n for n in g_ctx.neighbors(u)]
 
         else:
-            neg = np.random.randint(self.n)
+            neg = np.random.randint(self.n_graphs)
             with open(os.path.join(self.path, self.all_graphs[neg]),'rb') as f:
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
@@ -287,7 +288,7 @@ class Loader():
         indices = list(range(n))
         # np.random.shuffle(indices)
         np.random.seed(0)
-        split_train, split_valid = 0.5, 1
+        split_train, split_valid = 0.9, 1
         train_index, valid_index = int(split_train * n), int(split_valid * n)
 
 

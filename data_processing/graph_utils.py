@@ -24,7 +24,7 @@ def nodes_within_radius(G, u_idx, inner, outer) :
     """
     depth = outer+1 
     nodes = sorted(G.nodes())
-    total_nodes = [[nodes[u_idx]]] # list of lists, nodes at dist k of the source node 
+    total_nodes = [list([nodes[u_idx]])] # list of lists, nodes at dist k of the source node 
     assert(len(total_nodes)>0)
 
     for d in range(depth):
@@ -32,8 +32,7 @@ def nodes_within_radius(G, u_idx, inner, outer) :
         for n in total_nodes[d]:
             for nei in G.neighbors(n):
                 depth_ring.append(nei)
-
-            total_nodes.append(depth_ring)
+        total_nodes.append(depth_ring)
             
     if(inner>0):
         total_nodes = total_nodes[inner:] # Remove rings closer to source than the inner radius

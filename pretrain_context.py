@@ -47,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=128)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=False)
+    parser.add_argument('--fix_seed', action='store_true', default=True)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
