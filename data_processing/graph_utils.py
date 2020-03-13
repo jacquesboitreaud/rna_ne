@@ -25,6 +25,7 @@ def nodes_within_radius(G, u_idx, inner, outer) :
     depth = outer+1 
     nodes = sorted(G.nodes())
     total_nodes = [[nodes[u_idx]]] # list of lists, nodes at dist k of the source node 
+    assert(len(total_nodes)>0)
 
     for d in range(depth):
         depth_ring = []

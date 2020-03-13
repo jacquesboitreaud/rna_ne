@@ -37,17 +37,17 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=1000)
+                        type=int, default=-1)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
     parser.add_argument('--load_iter', type=int, default=410000)
     
-    parser.add_argument('--epochs', type=int, default=1000)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=16)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=True)
+    parser.add_argument('--fix_seed', action='store_true', default=False)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
@@ -67,14 +67,14 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     # config
-    feats_dim, h_size, out_size=6, 16, 32 # dims 
+    feats_dim, h_size, out_size=3, 16, 32 # dims 
     
     #Loaders
     # Add debug = True argument to add fake node feature that makes distinction trivial (loss converges immediately)
     loaders = Loader(path=args.train_dir ,
                      simplified_edges=True,
                      radii_params=(args.K,args.r1, args.r2),
-                     attributes = ['A','U','G','C','chi','gly_base'],
+                     attributes = ['delta','chi','gly_base'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
                      num_workers=0, 
@@ -89,8 +89,8 @@ if __name__ == "__main__":
     train_loader, test_loader, _ = loaders.get_data()
     
     #Model & hparams
-    #device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    device = 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    #device = 'cpu'
     parallel=False
     
     # Model instance contains GNN and context GNN 
@@ -156,12 +156,13 @@ if __name__ == "__main__":
             t_loss.backward()
             
             #Print & log
-            train_ep_loss += t_loss.item()/batch_size
+            per_item_loss = t_loss.item()/batch_size
+            train_ep_loss += per_item_loss
             if total_steps % args.log_iter == 0:
                 figure = draw_rec(dotprod.view(-1,1), labels.view(-1,1))
                 writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
-                writer.add_scalar('batchLoss/train', t_loss.item()/batch_size , total_steps)
-                print('epoch {}, opt. step n°{}, loss {:.2f}'.format(epoch, total_steps, t_loss.item()))
+                writer.add_scalar('batchLoss/train', t_loss.item() , total_steps)
+                print('epoch {}, opt. step n°{}, loss per it. {:.2f}'.format(epoch, total_steps, per_item_loss))
             
             del(t_loss)
             clip.clip_grad_norm_(model.parameters(),args.clip_norm)
@@ -177,7 +178,7 @@ if __name__ == "__main__":
                 torch.save( model.state_dict(), f"{args.save_path[:-4]}_iter_{total_steps}.pth")
                 
         # Epoch logging 
-        writer.add_scalar('epochLoss/train', train_ep_loss, epoch)
+        writer.add_scalar('epochLossPerItem/train', train_ep_loss/len(train_loader), epoch)
         
         # Validation pass
         model.eval()
@@ -211,6 +212,8 @@ if __name__ == "__main__":
                 test_ep_loss += t_loss.item()/batch_size
                     
         # Epoch logging
-        writer.add_scalar('epochLoss/test', test_ep_loss, epoch)
+        writer.add_scalar('epochLossPerItem/test', test_ep_loss/len(test_loader), epoch)
+        print('Test loss, per item :',test_ep_loss/len(test_loader) )
+        
         
         

@@ -39,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
                         type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
     parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
-                        type=int, default=200)
+                        type=int, default=300)
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     
@@ -81,8 +81,8 @@ if __name__ == "__main__":
             g=nx.to_undirected(g)
             g= dangle_trim(g)
             N1 = g.number_of_nodes()
-            if(N1!=N):
-                print(f'removed {N-N1} nodes, now {N1}')
+            #if(N1!=N):
+                #print(f'removed {N-N1} dangling nodes, now {N1}')
             if(N1==0):
                 continue # empty graph, do not process and do not save 
             
@@ -107,11 +107,16 @@ if __name__ == "__main__":
                     
                 except: # missing atom in nucleotide or 'X' nucleotide : delete 
                     bad_nts.append(n)
-                    print(n)
+                    if(data['nucleotide'].atoms!=[]):
+                        print('dropping', data['nucleotide'].nt, data['nucleotide'].real_nt, data['nucleotide'].atoms)
                 
-            # Remove nodes 
+            # Remove nodes where errors occured 
             G = g.copy()
             G.remove_nodes_from(bad_nts)
+            
+            N1 = G.number_of_nodes()
+            if(N1==0):
+                continue # empty graph, do not process and do not save 
             
             # Add node feature to all nodes 
             for a in angles:
