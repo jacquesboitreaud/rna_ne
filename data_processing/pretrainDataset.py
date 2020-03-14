@@ -121,7 +121,7 @@ class pretrainDataset(Dataset):
             G = pickle.load(f)
          
         # Pick a node at random : 
-        N = len(G.nodes)
+        N = G.number_of_nodes()
         u_idx = np.random.randint(N)
         
         # Selected node has idx u_idx in sorted(G.nodes) // coherent with dgl reindexing
@@ -143,7 +143,7 @@ class pretrainDataset(Dataset):
             with open(os.path.join(self.path, self.all_graphs[neg]),'rb') as f:
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
-            N = len(G_ctx.nodes)
+            N = G_ctx.number_of_nodes()
             u_neg_idx = np.random.randint(N)
             
             g_ctx = nx.Graph(G_ctx)
@@ -154,13 +154,9 @@ class pretrainDataset(Dataset):
             
             pair_label = 0 # negative pair 
             
-        # Fake node features 
-        if(self.debug):
-            nx.set_node_attributes(G, name='fake', values=1.0)
-            if(pair_label==0):
-                nx.set_node_attributes(g_ctx, name='fake', values=0.0)
-            else:
-                nx.set_node_attributes(g_ctx, name='fake', values=1.0)
+        # Add anchor nodes as a node feature 
+        is_anchor = {node: torch.tensor(node in anchor_nodes) for node in g_ctx.nodes()}
+        nx.set_node_attributes(g_ctx, name='anchor', values = is_anchor)
             
         
         # Cut graph to radius K around node u 
@@ -172,12 +168,7 @@ class pretrainDataset(Dataset):
         nodes = sorted(G.nodes)
         u_idx = [i for i,n in enumerate(nodes) if n==u][0]
         
-        # Add anchor nodes as a node feature 
-        is_anchor = {node: torch.tensor(node in anchor_nodes) for node in g_ctx.nodes()}
-        nx.set_node_attributes(g_ctx, name='anchor', values = is_anchor)
-        
         G = nx.to_undirected(G)
-        
         
         # Add Edge types to features 
         if(self.simplified_edges):
@@ -199,22 +190,22 @@ class pretrainDataset(Dataset):
         # Create dgl graph
         g_dgl = dgl.DGLGraph()
         ctx_g_dgl = dgl.DGLGraph()
-        if(self.debug):
-            g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], node_attrs = ['chi','delta','fake'])
-            ctx_g_dgl.from_networkx(nx_graph=g_ctx, edge_attrs=['one_hot'], node_attrs = ['anchor','chi','delta','fake'])
-            
-            # Init node embeddings with nodes features
-            g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['chi'].view(-1,1),g_dgl.ndata['fake'].view(-1,1)], dim = 1)
-            ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata['chi'].view(-1,1),ctx_g_dgl.ndata['fake'].view(-1,1)], 
-                                             dim=1)
-            
-        else:
+        
+        # Dgl graph build
+
+        try: # Catching a weird bug 
             g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], node_attrs = self.attributes)
             ctx_g_dgl.from_networkx(nx_graph=g_ctx, edge_attrs=['one_hot'], node_attrs = self.ctx_attributes)
+        except:
+            for a in self.attributes:
+                print('***** debug : context graph node attrs *****')
+                print(nx.get_node_attributes(g_ctx,a))
+                print('***** debug : patch graph node attrs *****')
+                print(nx.get_node_attributes(G,a))
             
-            # Init node embeddings with nodes features
-            g_dgl.ndata['h'] = torch.cat([g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim = 1)
-            ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim=1)
+        # Init node embeddings with nodes features
+        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim = 1)
+        ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim=1)
         
         
         if(self.EVAL): #TODO
@@ -287,7 +278,7 @@ class Loader():
         indices = list(range(n))
         # np.random.shuffle(indices)
         np.random.seed(0)
-        split_train, split_valid = 0.9, 1
+        split_train, split_valid = 1, 1
         train_index, valid_index = int(split_train * n), int(split_valid * n)
 
 
@@ -304,14 +295,11 @@ class Loader():
         #test_set = Subset(self.dataset, test_indices)
         print(f"Train set contains {len(train_set)} samples")
 
-        if(not self.EVAL): # Pretraining phase 
+        if(not self.EVAL): # Pretraining phase : only train loader 
             train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
                                       num_workers=self.num_workers, collate_fn=collate_block)
-    
-            valid_loader = DataLoader(dataset=valid_set, shuffle=True, batch_size=self.batch_size,
-                                       num_workers=self.num_workers, collate_fn=collate_block)
             
-            return train_loader, valid_loader, 0
+            return train_loader, 0, 0
         
         else: # Eval or visualization phase 
             train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,

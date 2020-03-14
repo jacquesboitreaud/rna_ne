@@ -14,6 +14,7 @@ graphs = os.listdir(gr_dir)
 
 cpt=0 
 graphs_cpt = 0
+d = {}
 
 for gid in graphs:
     graphs_cpt+=1
@@ -22,5 +23,10 @@ for gid in graphs:
         g = pickle.load(f)
         nn = g.number_of_nodes()
         cpt += nn
+    d[gid]=nn
+    
+with open('nodecounts.pickle', 'wb') as f:
+    pickle.dump(d,f)
+    
 print(cpt, ' nodes')
 print(graphs_cpt, ' graphs')

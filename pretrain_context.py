@@ -181,41 +181,7 @@ if __name__ == "__main__":
                 
         # Epoch logging 
         writer.add_scalar('epochLossPerItem/train', train_ep_loss/len(train_loader), epoch)
-        
-        # Validation pass
-        model.eval()
-        with torch.no_grad():
-            for batch_idx, (graph, ctx_graph, u_index, labels ) in enumerate(test_loader):
-
-                graph=send_graph_to_device(graph,device)
-                ctx_graph=send_graph_to_device(ctx_graph,device)
-
-                # Forward pass 
-                model(graph, ctx_graph) 
-                
-                # Get node embeddings 
-                graphs = dgl.unbatch(graph)
-                batch_size = len(graphs)
-                
-                h_v = torch.zeros(batch_size,out_size)
-                for k in range(batch_size):
-                    h_v[k] = graphs[k].ndata['h'][u_index[k],:]
-                
-                # Get context embedding : average of anchor nodes             
-                h_anchors = torch.zeros_like(h_v)
-                ctx_graphs = dgl.unbatch(ctx_graph)
-                for k in range(len(ctx_graphs)):
-                    is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b]
-                    h = ctx_graphs[k].ndata['h']
-                    h_anchors[k] = torch.mean(h[is_anchor])
-            
-                #Compute loss
-                t_loss, _ = pretrainLoss(h_v, h_anchors, labels, v=False, show = False)
-                test_ep_loss += t_loss.item()/batch_size
-                    
-        # Epoch logging
-        writer.add_scalar('epochLossPerItem/test', test_ep_loss/len(test_loader), epoch)
-        print('Test loss, per item :',test_ep_loss/len(test_loader) )
+        print(f'Epoch {epoch}, avg loss per item : {train_ep_loss/len(train_loader)}')
         
         
         

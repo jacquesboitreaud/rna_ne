@@ -120,6 +120,7 @@ if __name__ == "__main__":
             
             # Add node feature to all nodes 
             for a in angles:
+                assert(len(d[a]) == G.number_of_nodes())
                 nx.set_node_attributes(G, d[a], a)
             # Nucleotide types
             nx.set_node_attributes(G, nt_a, 'A')
