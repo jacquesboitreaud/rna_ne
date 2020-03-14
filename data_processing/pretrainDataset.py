@@ -148,12 +148,11 @@ class pretrainDataset(Dataset):
             
             g_ctx = nx.Graph(G_ctx)
             u_neg = sorted(g_ctx.nodes)[u_neg_idx]
+            anchor_nodes = [n for n in g_ctx.neighbors(u_neg)]
             ctx_nodes = nodes_within_radius(g_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
             g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
             
             pair_label = 0 # negative pair 
-            
-            anchor_nodes = [n for n in g_ctx.neighbors(u_neg)]
             
         # Fake node features 
         if(self.debug):
