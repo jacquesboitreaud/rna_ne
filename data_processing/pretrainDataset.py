@@ -132,12 +132,12 @@ class pretrainDataset(Dataset):
         
         if(r>0.5): # positive context 
             g_ctx = nx.Graph(G)
+            anchor_nodes = [n for n in g_ctx.neighbors(u)]
             pair_label = 1 # positive pair 
             ctx_nodes = nodes_within_radius(g_ctx, u_idx, inner=self.r1, outer=self.r2)
             g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
             
-            anchor_nodes = [n for n in g_ctx.neighbors(u)]
-
+            
         else:
             neg = np.random.randint(self.n_graphs)
             with open(os.path.join(self.path, self.all_graphs[neg]),'rb') as f:
