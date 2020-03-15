@@ -91,24 +91,30 @@ if __name__ == "__main__":
             for n, data in g.nodes(data=True):
                 nucleotide = data['nucleotide']
                 
-                # Nucleotide identity
-                n_type = nucleotide.nt
-                nt_a[n] = float(n_type=='A')
-                nt_u[n] = float(n_type=='U')
-                nt_g[n] = float(n_type=='G')
-                nt_c[n] = float(n_type=='C')
-
-                # Angles : 
-                try:
-                    chi, delta, gly_base = base_angles(nucleotide, 'rad')
-                    d['chi'][n]=chi
-                    d['delta'][n]=delta
-                    d['gly_base'][n]= gly_base
-                    
-                except: # missing atom in nucleotide or 'X' nucleotide : delete 
+                # Count context nodes
+                nbr_neigh = len(g[n])
+                
+                if(nbr_neigh==0):
                     bad_nts.append(n)
-                    #if(data['nucleotide'].atoms!=[]):
-                        #print('dropping', data['nucleotide'].nt, data['nucleotide'].real_nt, data['nucleotide'].atoms)
+                else:
+                    
+                
+                    # Nucleotide identity
+                    n_type = nucleotide.nt
+                    nt_a[n] = float(n_type=='A')
+                    nt_u[n] = float(n_type=='U')
+                    nt_g[n] = float(n_type=='G')
+                    nt_c[n] = float(n_type=='C')
+    
+                    # Angles : 
+                    try:
+                        chi, delta, gly_base = base_angles(nucleotide, 'rad')
+                        d['chi'][n]=chi
+                        d['delta'][n]=delta
+                        d['gly_base'][n]= gly_base
+                        
+                    except: # missing atom in nucleotide or 'X' nucleotide : delete 
+                        bad_nts.append(n)
                 
             # Remove nodes where errors occured 
             G = g.copy()

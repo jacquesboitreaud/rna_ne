@@ -46,9 +46,9 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--num_processes', type=int, default=0) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=32)
     
-    parser.add_argument('--debug', action='store_true', default=False)
+    parser.add_argument('--debug', action='store_true', default=True)
     parser.add_argument('--fix_seed', action='store_true', default=False)
 
     #Context prediction parameters 
@@ -72,7 +72,6 @@ if __name__ == "__main__":
     feats_dim, h_size, out_size=3, 16, 32 # dims 
     
     #Loaders
-    # Add debug = True argument to add fake node feature that makes distinction trivial (loss converges immediately)
     loaders = Loader(path=args.train_dir ,
                      simplified_edges=True,
                      radii_params=(args.K,args.r1, args.r2),
@@ -81,7 +80,8 @@ if __name__ == "__main__":
                      emb_size= feats_dim, 
                      num_workers=args.num_processes, 
                      batch_size=args.batch_size, 
-                     fix_seed = args.fix_seed)
+                     fix_seed = args.fix_seed, 
+                     debug = args.debug )
     
     # Tensorboard logging 
     # Writer will output to ./runs/ directory by default

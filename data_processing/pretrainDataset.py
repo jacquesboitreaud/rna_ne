@@ -65,6 +65,8 @@ class pretrainDataset(Dataset):
         
         self.EVAL=EVAL
         self.debug = debug
+        if(self.debug):
+            print('Debug prints set to True')
         self.fix_seed = fix_seed
         self.path = rna_graphs_path
         
@@ -119,7 +121,7 @@ class pretrainDataset(Dataset):
         
         with open(os.path.join(self.path, self.all_graphs[gidx]),'rb') as f:
             G = pickle.load(f)
-        G.to_undirected()
+        G.to_undirected() # Undirected graph 
          
         # Pick a node at random : 
         N = G.number_of_nodes()
@@ -133,6 +135,7 @@ class pretrainDataset(Dataset):
         
         if(r>0.5): # positive context 
             G_ctx = nx.Graph(G)
+            assert(not G_ctx.is_directed())
             #print('context graph all nodes : ', len(ctx_nodes))
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
             pair_label = 1 # positive pair 
@@ -149,7 +152,8 @@ class pretrainDataset(Dataset):
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
             N = G_ctx.number_of_nodes()
-            #print(N)
+            
+            assert(not G_ctx.is_directed())
             
             u_neg_idx = np.random.randint(N)
             
@@ -172,14 +176,13 @@ class pretrainDataset(Dataset):
         
         # Cut graph to radius K around node u 
         G=nx.Graph(G)
+        assert(not G.is_directed())
         local_nodes = nodes_within_radius(G, u_idx, inner=0, outer=self.K)
         G.remove_nodes_from([n for n in G if n not in set(local_nodes)])
         
         # Get the index of node u in the new cropped graph
         nodes = sorted(G.nodes)
         u_idx = [i for i,n in enumerate(nodes) if n==u][0]
-        
-        G = nx.to_undirected(G)
         
         # Add Edge types to features 
         if(self.simplified_edges):
@@ -324,12 +327,14 @@ class Loader():
 if __name__=='__main__':
     
     l = Loader(path ='../data/chunks', 
-               N_graphs = 1,
+               N_graphs = 100,
                emb_size = 12, 
                radii_params = (1,1,3),
                attributes = ['delta','chi', 'gly_base'])
     
     
     g = l.dataset.__getitem__(1)
+    
+    graph = g[0].to_networkx()
             
             
