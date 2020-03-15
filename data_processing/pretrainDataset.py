@@ -119,6 +119,7 @@ class pretrainDataset(Dataset):
         
         with open(os.path.join(self.path, self.all_graphs[gidx]),'rb') as f:
             G = pickle.load(f)
+        G.to_undirected()
          
         # Pick a node at random : 
         N = G.number_of_nodes()
@@ -136,6 +137,7 @@ class pretrainDataset(Dataset):
             pair_label = 1 # positive pair 
             ctx_nodes = nodes_within_radius(g_ctx, u_idx, inner=self.r1, outer=self.r2)
             g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
+            assert(g_ctx.number_of_nodes()>0)
             
             
         else:
@@ -144,6 +146,7 @@ class pretrainDataset(Dataset):
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
             N = G_ctx.number_of_nodes()
+            
             u_neg_idx = np.random.randint(N)
             
             g_ctx = nx.Graph(G_ctx)
@@ -151,6 +154,8 @@ class pretrainDataset(Dataset):
             anchor_nodes = [n for n in g_ctx.neighbors(u_neg)]
             ctx_nodes = nodes_within_radius(g_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
             g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
+            
+            assert(G_ctx.number_of_nodes()>0)
             
             pair_label = 0 # negative pair 
             
@@ -185,7 +190,6 @@ class pretrainDataset(Dataset):
         
         nx.set_edge_attributes(G, name='one_hot', values=one_hot)
         nx.set_edge_attributes(g_ctx, name='one_hot', values=one_hot_ctx)
-        
         
         # Create dgl graph
         g_dgl = dgl.DGLGraph()

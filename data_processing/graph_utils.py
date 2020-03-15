@@ -9,11 +9,6 @@ Utils functions for RNA graph processing and context selection
 
 import networkx as nx
 import itertools
-
-def anchor_nodes(G, u_idx, K, r1, r2):
-    # In current setting, anchor nodes are neighbours of u (K=1, r1=1)
-    
-    raise NotImplementedError
     
     
     
