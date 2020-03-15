@@ -132,12 +132,15 @@ class pretrainDataset(Dataset):
         r = int(idx%2==0)
         
         if(r>0.5): # positive context 
-            g_ctx = nx.Graph(G)
-            anchor_nodes = [n for n in g_ctx.neighbors(u)]
+            G_ctx = nx.Graph(G)
+            #print('context graph all nodes : ', len(ctx_nodes))
+            anchor_nodes = [n for n in G_ctx.neighbors(u)]
             pair_label = 1 # positive pair 
-            ctx_nodes = nodes_within_radius(g_ctx, u_idx, inner=self.r1, outer=self.r2)
-            g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
-            assert(g_ctx.number_of_nodes()>0)
+            ctx_nodes = nodes_within_radius(G_ctx, u_idx, inner=self.r1, outer=self.r2)
+            assert(len(ctx_nodes)>0)
+            G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
+            #print('ctx nodes after drop: ', len(ctx_nodes))
+            assert(G_ctx.number_of_nodes()>0)
             
             
         else:
@@ -146,22 +149,25 @@ class pretrainDataset(Dataset):
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
             N = G_ctx.number_of_nodes()
+            #print(N)
             
             u_neg_idx = np.random.randint(N)
             
-            g_ctx = nx.Graph(G_ctx)
-            u_neg = sorted(g_ctx.nodes)[u_neg_idx]
-            anchor_nodes = [n for n in g_ctx.neighbors(u_neg)]
-            ctx_nodes = nodes_within_radius(g_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
-            g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
+            G_ctx = nx.Graph(G_ctx)
+            u_neg = sorted(G_ctx.nodes)[u_neg_idx]
+            anchor_nodes = [n for n in G_ctx.neighbors(u_neg)]
+            ctx_nodes = nodes_within_radius(G_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
+            assert(len(ctx_nodes)>0)
+            G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
+            #print(G_ctx.number_of_nodes(), ' after drop')
             
             assert(G_ctx.number_of_nodes()>0)
             
             pair_label = 0 # negative pair 
             
         # Add anchor nodes as a node feature 
-        is_anchor = {node: torch.tensor(node in anchor_nodes) for node in g_ctx.nodes()}
-        nx.set_node_attributes(g_ctx, name='anchor', values = is_anchor)
+        is_anchor = {node: torch.tensor(node in anchor_nodes) for node in G_ctx.nodes()}
+        nx.set_node_attributes(G_ctx, name='anchor', values = is_anchor)
             
         
         # Cut graph to radius K around node u 
@@ -180,16 +186,16 @@ class pretrainDataset(Dataset):
             one_hot = {edge: self._get_simple_etype(label) for edge, label in
                    (nx.get_edge_attributes(G, 'label')).items()}
             one_hot_ctx = {edge: self._get_simple_etype(label) for edge, label in
-                   (nx.get_edge_attributes(g_ctx, 'label')).items()}
+                   (nx.get_edge_attributes(G_ctx, 'label')).items()}
         else:
             one_hot = {edge: torch.tensor(self.edge_map[label]) for edge, label in
                    (nx.get_edge_attributes(G, 'label')).items()}
             one_hot_ctx = {edge: torch.tensor(self.edge_map[label]) for edge, label in
-                   (nx.get_edge_attributes(g_ctx, 'label')).items()}
+                   (nx.get_edge_attributes(G_ctx, 'label')).items()}
         
         
         nx.set_edge_attributes(G, name='one_hot', values=one_hot)
-        nx.set_edge_attributes(g_ctx, name='one_hot', values=one_hot_ctx)
+        nx.set_edge_attributes(G_ctx, name='one_hot', values=one_hot_ctx)
         
         # Create dgl graph
         g_dgl = dgl.DGLGraph()
@@ -199,11 +205,11 @@ class pretrainDataset(Dataset):
 
         try: # Catching a weird bug 
             g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], node_attrs = self.attributes)
-            ctx_g_dgl.from_networkx(nx_graph=g_ctx, edge_attrs=['one_hot'], node_attrs = self.ctx_attributes)
+            ctx_g_dgl.from_networkx(nx_graph=G_ctx, edge_attrs=['one_hot'], node_attrs = self.ctx_attributes)
         except:
             for a in self.attributes:
                 print('***** debug : context graph node attrs *****')
-                print(nx.get_node_attributes(g_ctx,a))
+                print(nx.get_node_attributes(G_ctx,a))
                 print('***** debug : patch graph node attrs *****')
                 print(nx.get_node_attributes(G,a))
             
@@ -317,25 +323,13 @@ class Loader():
         
 if __name__=='__main__':
     
+    l = Loader(path ='../data/chunks', 
+               N_graphs = 1,
+               emb_size = 12, 
+               radii_params = (1,1,3),
+               attributes = ['delta','chi', 'gly_base'])
     
-    with open('../data/chunks/1a1t.pickle','rb') as f:
-            graph = pickle.load(f)
-            G = nx.Graph(graph)
-            print(f'Loaded g with {len(G.nodes())} nodes')
-            
-            # pick node 
-            i = np.random.randint(len(G.nodes()))
-            print(f'picked node {i}')
-            
-            # Context graph 
-            g_ctx = nx.Graph(G)
-            ctx_nodes = nodes_within_radius(g_ctx, i, inner=1, outer=3)
-            g_ctx.remove_nodes_from([n for n in g_ctx if n not in set(ctx_nodes)])
-            
-            
-            
-            # Reduce graph to u neighborhood 
-            local_nodes = nodes_within_radius(G, i, inner = 0, outer = 1)
-            G.remove_nodes_from([n for n in G if n not in set(local_nodes)])
+    
+    g = l.dataset.__getitem__(1)
             
             
