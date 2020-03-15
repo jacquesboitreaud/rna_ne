@@ -118,8 +118,9 @@ class pretrainDataset(Dataset):
         
         # pick a graph at random 
         gidx = np.random.randint(self.n_graphs)
+        gid = self.all_graphs[gidx]
         
-        with open(os.path.join(self.path, self.all_graphs[gidx]),'rb') as f:
+        with open(os.path.join(self.path, gid),'rb') as f:
             G = pickle.load(f)
         G.to_undirected() # Undirected graph 
          
@@ -136,19 +137,20 @@ class pretrainDataset(Dataset):
         if(r>0.5): # positive context 
             G_ctx = nx.Graph(G)
             assert(not G_ctx.is_directed())
-            #print('context graph all nodes : ', len(ctx_nodes))
+
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
             pair_label = 1 # positive pair 
             ctx_nodes = nodes_within_radius(G_ctx, u_idx, inner=self.r1, outer=self.r2)
-            assert(len(ctx_nodes)>0)
+            if(len(ctx_nodes==0)):
+                assert(False), f'graph id {gid}, node {u}, positive pair, context has size zero'
+                
             G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
-            #print('ctx nodes after drop: ', len(ctx_nodes))
-            assert(G_ctx.number_of_nodes()>0)
             
             
         else:
             neg = np.random.randint(self.n_graphs)
-            with open(os.path.join(self.path, self.all_graphs[neg]),'rb') as f:
+            ngid = self.all_graphs[neg]
+            with open(os.path.join(self.path, ngid),'rb') as f:
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
             N = G_ctx.number_of_nodes()
@@ -161,11 +163,9 @@ class pretrainDataset(Dataset):
             u_neg = sorted(G_ctx.nodes)[u_neg_idx]
             anchor_nodes = [n for n in G_ctx.neighbors(u_neg)]
             ctx_nodes = nodes_within_radius(G_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
-            assert(len(ctx_nodes)>0)
+            if(len(ctx_nodes==0)):
+                assert(False), f'graph id {ngid}, node {u_neg}, negative pair, context has size zero'
             G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
-            #print(G_ctx.number_of_nodes(), ' after drop')
-            
-            assert(G_ctx.number_of_nodes()>0)
             
             pair_label = 0 # negative pair 
             
@@ -178,8 +178,10 @@ class pretrainDataset(Dataset):
         G=nx.Graph(G)
         assert(not G.is_directed())
         local_nodes = nodes_within_radius(G, u_idx, inner=0, outer=self.K)
-        G.remove_nodes_from([n for n in G if n not in set(local_nodes)])
         
+        G.remove_nodes_from([n for n in G if n not in set(local_nodes)])
+        if(G.number_of_nodes()==0):
+            assert(False), f'graph id {gid}, node {u}, no nodes left within radius K'
         # Get the index of node u in the new cropped graph
         nodes = sorted(G.nodes)
         u_idx = [i for i,n in enumerate(nodes) if n==u][0]
