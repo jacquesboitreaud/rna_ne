@@ -9,7 +9,7 @@ import pickle
 import os
 
 gr_dir = '../data/chunks'
-
+"""
 graphs = os.listdir(gr_dir)
 
 cpt=0 
@@ -24,9 +24,14 @@ for gid in graphs:
         nn = g.number_of_nodes()
         cpt += nn
     d[gid]=nn
+    if(nn<6)
     
 with open('nodecounts.pickle', 'wb') as f:
     pickle.dump(d,f)
-    
 print(cpt, ' nodes')
 print(graphs_cpt, ' graphs')
+"""
+
+with open('nodecounts.pickle', 'rb') as f:
+    d= pickle.load(f)
+print(len(d))

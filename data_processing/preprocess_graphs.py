@@ -39,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
                         type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
     parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
-                        type=int, default=300)
+                        type=int, default=4500)
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     print(f'Calculating {len(angles)} angles for each nt.')
     print(f'Graphs with node features will be saved to {annot_dir}')
     
-    cpt=0
+    cpt, bads =0,0
     
     for pdb_id in os.listdir(gr_dir):
         
@@ -115,7 +115,9 @@ if __name__ == "__main__":
             G.remove_nodes_from(bad_nts)
             
             N1 = G.number_of_nodes()
-            if(N1==0):
+            if(N1<=4): # Not enough nodes, do not process and do not save 
+                print('less than 4 nodes. passing')
+                bads+=1
                 continue # empty graph, do not process and do not save 
             
             # Add node feature to all nodes 
@@ -134,6 +136,7 @@ if __name__ == "__main__":
                 pickle.dump(G, f)
                 
     print(f'wrote {cpt} preprocessed graphs to {args.write_dir}')
+    print(f'removed {bads} too small graphs')
                 
             
             
