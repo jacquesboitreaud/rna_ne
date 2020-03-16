@@ -139,7 +139,7 @@ class pretrainDataset(Dataset):
             assert(not G_ctx.is_directed())
 
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
-            print(anchor_nodes)
+            #print(anchor_nodes)
             
             
             pair_label = 1 # positive pair 
