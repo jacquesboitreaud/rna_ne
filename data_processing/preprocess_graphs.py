@@ -98,7 +98,6 @@ if __name__ == "__main__":
                     bad_nts.append(n)
                 else:
                     
-                
                     # Nucleotide identity
                     n_type = nucleotide.nt
                     nt_a[n] = float(n_type=='A')

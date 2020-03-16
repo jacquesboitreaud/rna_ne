@@ -140,7 +140,7 @@ class pretrainDataset(Dataset):
 
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
             pair_label = 1 # positive pair 
-            ctx_nodes = nodes_within_radius(G_ctx, u_idx, inner=self.r1, outer=self.r2)
+            ctx_nodes = nodes_within_radius(G_ctx, u, inner=self.r1, outer=self.r2)
             if(len(ctx_nodes)==0):
                 assert(False), f'graph id {gid}, node {u}, positive pair, context has size zero'
                 
@@ -161,8 +161,10 @@ class pretrainDataset(Dataset):
             
             G_ctx = nx.Graph(G_ctx)
             u_neg = sorted(G_ctx.nodes)[u_neg_idx]
+            
             anchor_nodes = [n for n in G_ctx.neighbors(u_neg)]
-            ctx_nodes = nodes_within_radius(G_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
+            
+            ctx_nodes = nodes_within_radius(G_ctx, u_neg, inner=self.r1, outer=self.r2)
             if(len(ctx_nodes)==0):
                 assert(False), f'graph id {ngid}, node {u_neg}, negative pair, context has size zero'
             G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
@@ -174,10 +176,11 @@ class pretrainDataset(Dataset):
         nx.set_node_attributes(G_ctx, name='anchor', values = is_anchor)
             
         
-        # Cut graph to radius K around node u 
+        # Cut graph to radius K around node u : K=1, neighbours of u 
         G=nx.Graph(G)
         assert(not G.is_directed())
-        local_nodes = nodes_within_radius(G, u_idx, inner=0, outer=self.K)
+        local_nodes = [n for n in G.neighbors(u)] 
+        local_nodes.append(u)
         
         G.remove_nodes_from([n for n in G if n not in set(local_nodes)])
         if(G.number_of_nodes()==0):
@@ -208,15 +211,17 @@ class pretrainDataset(Dataset):
         
         # Dgl graph build
 
-        try: # Catching a weird bug 
-            g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], node_attrs = self.attributes)
+        g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], node_attrs = self.attributes)
+        try:
             ctx_g_dgl.from_networkx(nx_graph=G_ctx, edge_attrs=['one_hot'], node_attrs = self.ctx_attributes)
         except:
-            for a in self.attributes:
-                print('***** debug : context graph node attrs *****')
-                print(nx.get_node_attributes(G_ctx,a))
-                print('***** debug : patch graph node attrs *****')
-                print(nx.get_node_attributes(G,a))
+            print('ctx graph to dgl error')
+            if(r>0.5): # + context 
+                print('graph : ', gid, 'node', u)
+            else:
+                print('neg graph ', ngid, 'node', u_neg)
+            for a in self.ctx_attributes:
+                print(nx.get_node_attribute(G_ctx,a))
             
         # Init node embeddings with nodes features
         g_dgl.ndata['h'] = torch.cat([g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim = 1)
@@ -338,5 +343,11 @@ if __name__=='__main__':
     g = l.dataset.__getitem__(1)
     
     graph = g[0].to_networkx()
+    
+    for i,u in enumerate(graph.nodes):
+        test1 = nodes_within_radius(graph, i, 0,1)
+        test2 = [n for n in graph.neighbors(u)]
+        print('my func: (u and its neighbours)', test1)
+        print('true neigh : ', test2)
             
             

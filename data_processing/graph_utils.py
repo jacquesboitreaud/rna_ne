@@ -12,14 +12,14 @@ import itertools
     
     
     
-def nodes_within_radius(G, u_idx, inner, outer) :
+def nodes_within_radius(G, u, inner, outer) :
     """ 
-    Takes graph, node index (in sorted(g.nodes)) and inner and outer ring radii
-    Build the context graph around node [u_idx] and returns graph object 
+    Takes graph, node and inner and outer ring radii
+    Build the context graph around node u and returns graph object 
     """
-    depth = outer+1 
-    nodes = sorted(G.nodes())
-    total_nodes = [list([nodes[u_idx]])] # list of lists, nodes at dist k of the source node 
+    depth = outer
+
+    total_nodes = [list([u])] # list of lists, nodes at dist k of the source node 
     assert(len(total_nodes)>0)
 
     for d in range(depth):
@@ -29,8 +29,10 @@ def nodes_within_radius(G, u_idx, inner, outer) :
                 depth_ring.append(nei)
         total_nodes.append(depth_ring)
             
+    
     if(inner>0):
         total_nodes = total_nodes[inner:] # Remove rings closer to source than the inner radius
+        #assert(len(total_nodes) == outer-inner+1)
 
     return set(itertools.chain(*total_nodes))
 
