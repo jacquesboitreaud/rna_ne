@@ -82,7 +82,6 @@ if __name__ == "__main__":
             
             nodes =g.nodes(data=True)
             N = g.number_of_nodes()
-            print(N)
             
             # Clean edges
             remove_self_edges(g) # Get rid of self edges (not sure its right?)
