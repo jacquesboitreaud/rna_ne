@@ -139,6 +139,9 @@ class pretrainDataset(Dataset):
             assert(not G_ctx.is_directed())
 
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
+            print(anchor_nodes)
+            
+            
             pair_label = 1 # positive pair 
             ctx_nodes = nodes_within_radius(G_ctx, u, inner=self.r1, outer=self.r2)
             if(len(ctx_nodes)==0):
@@ -333,21 +336,12 @@ class Loader():
         
 if __name__=='__main__':
     
-    l = Loader(path ='../data/chunks', 
-               N_graphs = 100,
-               emb_size = 12, 
-               radii_params = (1,1,3),
-               attributes = ['delta','chi', 'gly_base'])
+    graph = pickle.load(open('C:/Users/jacqu/Documents/GitHub/DEBUG/5i4a.pickle','rb'))
     
+    n = ('D',11)
     
-    g = l.dataset.__getitem__(1)
-    
-    graph = g[0].to_networkx()
-    
-    for i,u in enumerate(graph.nodes):
-        test1 = nodes_within_radius(graph, i, 0,1)
-        test2 = [n for n in graph.neighbors(u)]
-        print('my func: (u and its neighbours)', test1)
-        print('true neigh : ', test2)
+    for n in graph.nodes():
+        print(len(graph[n]))
+        
             
             

@@ -42,6 +42,8 @@ if __name__ == "__main__":
                         type=int, default=4500)
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
+    parser.add_argument('-d', "--debug", help="debug", 
+                        type=bool, default=False)
     
      # =======
 
@@ -57,6 +59,11 @@ if __name__ == "__main__":
     print(f'Graphs with node features will be saved to {annot_dir}')
     
     cpt, bads =0,0
+    
+    if(args.debug):
+        gr_dir = 'C:/Users/jacqu/Documents/GitHub/DEBUG'
+        annot_dir = 'C:/Users/jacqu/Documents/GitHub/DEBUG'
+        
     
     for pdb_id in os.listdir(gr_dir):
         
@@ -75,6 +82,7 @@ if __name__ == "__main__":
             
             nodes =g.nodes(data=True)
             N = g.number_of_nodes()
+            print(N)
             
             # Clean edges
             remove_self_edges(g) # Get rid of self edges (not sure its right?)
@@ -93,6 +101,7 @@ if __name__ == "__main__":
                 
                 # Count context nodes
                 nbr_neigh = len(g[n])
+                print(nbr_neigh)
                 
                 if(nbr_neigh==0):
                     bad_nts.append(n)
@@ -118,6 +127,12 @@ if __name__ == "__main__":
             # Remove nodes where errors occured 
             G = g.copy()
             G.remove_nodes_from(bad_nts)
+            
+            # Now check all nodes have at least one neighbor: 
+            nbr_neigh = [len(G[n]) for n in G.nodes()]
+            m = min(nbr_neigh)
+            if(m==0): # Do not save this graph : one node is lonely . 
+                print('Lonely node(s). passing')
             
             N1 = G.number_of_nodes()
             if(N1<=4): # Not enough nodes, do not process and do not save 

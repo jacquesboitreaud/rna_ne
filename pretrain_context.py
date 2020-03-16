@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=-1)
+                        type=int, default=1)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--num_processes', type=int, default=0) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=1)
     
     parser.add_argument('--debug', action='store_true', default=True)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -71,8 +71,14 @@ if __name__ == "__main__":
     # config
     feats_dim, h_size, out_size=3, 16, 32 # dims 
     
+    # Train_dir 
+    if(not args.debug):
+        td = args.train_dir
+    else:
+        td = 'C:/Users/jacqu/Documents/GitHub/DEBUG'
+    
     #Loaders
-    loaders = Loader(path=args.train_dir ,
+    loaders = Loader(path=td ,
                      simplified_edges=True,
                      radii_params=(args.K,args.r1, args.r2),
                      attributes = ['delta','chi','gly_base'],
