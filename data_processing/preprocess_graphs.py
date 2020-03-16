@@ -101,7 +101,6 @@ if __name__ == "__main__":
                 
                 # Count context nodes
                 nbr_neigh = len(g[n])
-                print(nbr_neigh)
                 
                 if(nbr_neigh==0):
                     bad_nts.append(n)
