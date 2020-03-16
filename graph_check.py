@@ -20,5 +20,9 @@ if __name__ == "__main__":
         
     print(g.nodes(data=True))
     
+    for n, data in g.nodes(data=True):
+        if(n==('B',11)):
+            print(data)
+    
     
 
