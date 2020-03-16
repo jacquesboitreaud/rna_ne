@@ -141,7 +141,7 @@ class pretrainDataset(Dataset):
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
             pair_label = 1 # positive pair 
             ctx_nodes = nodes_within_radius(G_ctx, u_idx, inner=self.r1, outer=self.r2)
-            if(len(ctx_nodes==0)):
+            if(len(ctx_nodes)==0):
                 assert(False), f'graph id {gid}, node {u}, positive pair, context has size zero'
                 
             G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
@@ -163,7 +163,7 @@ class pretrainDataset(Dataset):
             u_neg = sorted(G_ctx.nodes)[u_neg_idx]
             anchor_nodes = [n for n in G_ctx.neighbors(u_neg)]
             ctx_nodes = nodes_within_radius(G_ctx, u_neg_idx, inner=self.r1, outer=self.r2)
-            if(len(ctx_nodes==0)):
+            if(len(ctx_nodes)==0):
                 assert(False), f'graph id {ngid}, node {u_neg}, negative pair, context has size zero'
             G_ctx.remove_nodes_from([n for n in G_ctx if n not in set(ctx_nodes)])
             
