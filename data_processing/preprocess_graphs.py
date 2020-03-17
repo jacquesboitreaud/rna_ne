@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     parser.add_argument('-d', "--debug", help="debug", 
-                        type=bool, default=True)
+                        type=bool, default=False)
     
      # =======
 
@@ -159,7 +159,7 @@ if __name__ == "__main__":
             with open(os.path.join(annot_dir,pdb_id),'wb') as f:
                 pickle.dump(G, f)
                 
-    print(f'wrote {cpt} preprocessed graphs to {args.write_dir}')
+    print(f'wrote {cpt} preprocessed graphs to {annot_dir}')
     print(f'removed {bads} too small graphs')
                 
             
