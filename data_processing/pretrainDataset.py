@@ -336,12 +336,10 @@ class Loader():
         
 if __name__=='__main__':
     
-    graph = pickle.load(open('C:/Users/jacqu/Documents/GitHub/DEBUG/5i4a.pickle','rb'))
-    
-    n = ('D',11)
+    graph = pickle.load(open('../../data/RNA_Graphs/5i4a.pickle','rb'))
     
     for n in graph.nodes():
-        print(len(graph[n]))
+        print(n, len(graph[n]))
         
             
             

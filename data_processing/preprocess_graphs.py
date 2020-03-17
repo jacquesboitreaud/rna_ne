@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     parser.add_argument('-d', "--debug", help="debug", 
-                        type=bool, default=False)
+                        type=bool, default=True)
     
      # =======
 
@@ -126,7 +126,9 @@ if __name__ == "__main__":
             G = g.copy()
             G.remove_nodes_from(bad_nts)
             
-            # Now check all nodes have at least one neighbor: 
+            # Now check all nodes have at least one neighbor:
+            for n in G.nodes():
+                print(n, len(G[n]))
             nbr_neigh = [len(G[n]) for n in G.nodes()]
             m = min(nbr_neigh)
             if(m==0): # Do not save this graph : one node is lonely . 
