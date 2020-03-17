@@ -336,7 +336,7 @@ class Loader():
         
 if __name__=='__main__':
     
-    graph = pickle.load(open('../../data/RNA_Graphs/5i4a.pickle','rb'))
+    graph = pickle.load(open('../data/chunks/5i4a.pickle','rb'))
     
     for n in graph.nodes():
         print(n, len(graph[n]))
