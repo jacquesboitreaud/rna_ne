@@ -61,8 +61,8 @@ if __name__ == "__main__":
     cpt, bads =0,0
     
     if(args.debug):
-        gr_dir = 'C:/Users/jacqu/Documents/GitHub/DEBUG'
-        annot_dir = 'C:/Users/jacqu/Documents/GitHub/DEBUG'
+        gr_dir = '../data/debug_i'
+        annot_dir = '../data/debug_o'
         
     
     for pdb_id in os.listdir(gr_dir):
@@ -127,12 +127,16 @@ if __name__ == "__main__":
             G.remove_nodes_from(bad_nts)
             
             # Now check all nodes have at least one neighbor:
+            """
             for n in G.nodes():
                 print(n, len(G[n]))
+            """
             nbr_neigh = [len(G[n]) for n in G.nodes()]
             m = min(nbr_neigh)
             if(m==0): # Do not save this graph : one node is lonely . 
                 print('Lonely node(s). passing')
+                bads+=1
+                continue
             
             N1 = G.number_of_nodes()
             if(N1<=4): # Not enough nodes, do not process and do not save 
