@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=1)
+                        type=int, default=-1)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
@@ -45,11 +45,11 @@ if __name__ == "__main__":
     
     parser.add_argument('-p', '--num_processes', type=int, default=0) # Number of loader processes
     
-    parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=25)
+    parser.add_argument('--batch_size', type=int, default=64)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=False)
+    parser.add_argument('--fix_seed', action='store_true', default=True)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
@@ -61,8 +61,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
     parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
-    parser.add_argument('--log_iter', type=int, default=25) # print loss metrics every _ step
-    parser.add_argument('--save_iter', type=int, default=1000) # save model weights every _ step
+    parser.add_argument('--log_iter', type=int, default=100) # print loss metrics every _ step
+    parser.add_argument('--save_iter', type=int, default=5000) # save model weights every _ step
 
      # =======
 
