@@ -9,8 +9,12 @@ import seaborn as sns
 
 if __name__ == "__main__":
     sys.path.append("..")
+    sys.path.append('data_processing')
+    
+from rna_classes import * 
 
 from rna_layout import circular_layout
+
 
 
 
@@ -136,13 +140,18 @@ def generic_draw_pair(graphs, title="", highlight_edges=None, node_colors=None, 
     plt.axis('off')
     plt.title(f"distance {title}")
     plt.show()
+    
+    
+    
 def ablation_draw():
-    g_name = "1fmn_#0.1:A:FMN:36.nx_annot.p"
+    g_name = "../data/chunks/1a1t.pickle"
     modes = ['', '_bb-only', '_wc-bb', '_wc-bb-nc', '_no-label', '_label-shuffle']
     for m in modes:
-        g_dir = "../data/annotated/pockets_nx" + m
-        g,_,_,_ = pickle.load(open(os.path.join(g_dir, g_name), 'rb'))
-        rna_draw(g, title=m)
+        #g_dir = "../data/annotated/pockets_nx" + m
+        #g,_,_,_ = pickle.load(open(os.path.join(g_dir, g_name), 'rb'))
+        if(m=='_wc-bb-nc'):
+            g = pickle.load(open(g_name, 'rb'))
+            rna_draw(g, title=m)
     pass
 
 if __name__ == "__main__":

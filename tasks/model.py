@@ -97,8 +97,6 @@ def draw_rec( prod, label, title = ''):
 def classifLoss(h, labels, show = False):
     # Node classification loss 
 
-    labels = labels.view(-1,1)
-
     if(show):
         draw_rec(torch.sigmoid(h), labels)
         plt.show()

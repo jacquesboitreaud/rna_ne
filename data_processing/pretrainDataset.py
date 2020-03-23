@@ -73,7 +73,7 @@ class pretrainDataset(Dataset):
         if(N_graphs!=None):
             self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number
         else:
-            self.all_graphs = os.listdir(self.path)
+            self.all_graphs = list(os.listdir(self.path)) 
             np.random.seed(10)
             np.random.shuffle(self.all_graphs)
             

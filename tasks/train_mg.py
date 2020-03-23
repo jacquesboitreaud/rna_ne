@@ -41,12 +41,12 @@ if __name__ == "__main__":
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=1000)
     parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
-                        default=False)
+                        default=True)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
     
-    parser.add_argument('--epochs', type=int, default=10)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=16)
     
     parser.add_argument('--debug', action='store_true', default=False)
@@ -115,6 +115,7 @@ if __name__ == "__main__":
     for epoch in range(1, args.epochs+1):
         print(f'Starting epoch {epoch}')
         train_ep_loss, test_ep_loss = 0,0
+        accuracy_num, accuracy_denom, pos_pred = 0,0, 0
         
         for batch_idx, (graph, pdbids) in enumerate(train_loader):
 
@@ -127,11 +128,18 @@ if __name__ == "__main__":
             
             # Get node embeddings 
             h = graph.ndata['h'].view(-1,1)
-            labels = graph.ndata['Mg_binding'].float()
+            labels = graph.ndata['Mg_binding'].float().view(-1,1)
             #Compute loss
-            t_loss = classifLoss(h, labels, show=bool(total_steps%args.log_iter==0))
+            t_loss = classifLoss(h, labels, show=False) #show=bool(total_steps%args.log_iter==0))
             optimizer.zero_grad()
             t_loss.backward()
+            
+            # Epoch accuracy 
+            pred = torch.round(torch.sigmoid(h))
+            pos_pred += torch.sum(pred)
+            correct = (pred==labels).float().sum()
+            accuracy_num += correct 
+            accuracy_denom += pred.shape[0]
             
             #Print & log
             train_ep_loss += t_loss.item()
@@ -153,12 +161,17 @@ if __name__ == "__main__":
             #Saving model 
             if total_steps % args.save_iter == 0:
                 torch.save( model.state_dict(), f"{args.save_path[:-4]}_iter_{total_steps}.pth")
-                
+        
+        accuracy = accuracy_num/accuracy_denom
+        frac_pos_pred = pos_pred/accuracy_denom
+        print(f'epoch {epoch}, train accuracy : {accuracy}, frac positive pred : {frac_pos_pred}')
         # Epoch logging 
         writer.add_scalar('epochLoss/train', train_ep_loss, epoch)
+        writer.add_scalar('epochAcc/train', accuracy, epoch)
         
         # Validation pass
         model.eval()
+        accuracy_num, accuracy_denom, pos_pred = 0,0, 0
         with torch.no_grad():
             for batch_idx, (graph, pdbids ) in enumerate(test_loader):
 
@@ -168,13 +181,24 @@ if __name__ == "__main__":
                 model(graph) 
                 
                 h=graph.ndata['h'].view(-1,1)
-                labels = graph.ndata['Mg_binding'].float()
+                labels = graph.ndata['Mg_binding'].float().view(-1,1)
             
                 #Compute loss
                 t_loss = classifLoss(h, labels, show = False)
                 test_ep_loss += t_loss.item()
+                
+                # Epoch accuracy 
+                pred = torch.round(torch.sigmoid(h))
+                pos_pred += torch.sum(pred)
+                correct = (pred==labels).float().sum()
+                accuracy_num += correct 
+                accuracy_denom += pred.shape[0]
+                
+            accuracy = accuracy_num/accuracy_denom
+            frac_pos_pred = pos_pred /accuracy_denom
+            print(f'epoch {epoch}, test accuracy : {accuracy}, frac positive pred : {frac_pos_pred}')
                     
         # Epoch logging
         writer.add_scalar('epochLoss/test', test_ep_loss, epoch)
-        
+        writer.add_scalar('epochAcc/test', accuracy, epoch)
         

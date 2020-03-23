@@ -13,7 +13,7 @@ import os
 import sys
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    sys.path.append(os.path.join(script_dir, '..'))
+    sys.path.append(os.path.join(script_dir, '../..'))
     
 import torch
 import dgl
@@ -27,9 +27,8 @@ import networkx as nx
 from tqdm import tqdm
 
 # Do Not remove, required for loading pickle rna graphs
-import rna_classes
 from rna_classes import *
-from graph_utils import *
+from data_processing.graph_utils import *
 
 from torch.utils.data import Dataset, DataLoader, Subset
 
