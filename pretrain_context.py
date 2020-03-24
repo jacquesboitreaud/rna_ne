@@ -43,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', type=bool, default=False)
     parser.add_argument('--load_iter', type=int, default=410000)
     
-    parser.add_argument('-p', '--num_processes', type=int, default=0) # Number of loader processes
+    parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=25)
     parser.add_argument('--batch_size', type=int, default=64)

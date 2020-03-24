@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=1000)
+                        type=int, default=-1)
     parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
                         default=True)
     
@@ -48,6 +48,8 @@ if __name__ == "__main__":
     
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=16)
+    
+    parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--layers', type=int, default=2) # nbr of layers in RGCN 
@@ -77,7 +79,7 @@ if __name__ == "__main__":
                      attributes = ['A','U','G','C','chi','gly_base'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
-                     num_workers=0, 
+                     num_workers=args.num_processes, 
                      batch_size=args.batch_size)
     
     # Tensorboard logging 
