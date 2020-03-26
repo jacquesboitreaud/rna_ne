@@ -19,7 +19,6 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(os.path.join(script_dir, '..'))
 
-    from data_processing.pdb_utils import *
     from utils import *
 
 def angle(ba,bc):

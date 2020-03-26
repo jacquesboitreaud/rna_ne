@@ -38,10 +38,17 @@ def nodes_within_radius(G, u, inner, outer) :
 
 
 def find_node(graph, chain, pos):
-    # Find a node in a networkx rna graph 
+    # Find a node in a networkx rna graph , returns node id 
     for n,d in graph.nodes(data=True):
         if (n[0] == chain) and (d['nucleotide'].pdb_pos == str(pos)):
             return n
+    return None
+
+def find_nucleotide(graph, chain, pos):
+    # Find a node in a networkx rna graph and returns its 'nucleotide' object 
+    for n,d in graph.nodes(data=True):
+        if (n[0] == chain) and (d['nucleotide'].pdb_pos == str(pos)):
+            return d['nucleotide']
     return None
 
 def dangle_trim(G):
