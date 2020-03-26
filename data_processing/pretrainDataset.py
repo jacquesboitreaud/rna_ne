@@ -108,7 +108,7 @@ class pretrainDataset(Dataset):
             return torch.tensor(1) # Non canonical edges category
             
     def __len__(self): # Number of samples in epoch : should be >> n_graphs (1 sample = 1 node)
-        return self.n_graphs *50
+        return self.n_graphs
     
     def __getitem__(self, idx):
         
@@ -117,8 +117,8 @@ class pretrainDataset(Dataset):
             np.random.seed(10)
         
         # pick a graph at random 
-        gidx = np.random.randint(self.n_graphs)
-        gid = self.all_graphs[gidx]
+        #gidx = np.random.randint(self.n_graphs)
+        gid = self.all_graphs[idx]
         
         with open(os.path.join(self.path, gid),'rb') as f:
             G = pickle.load(f)
@@ -139,8 +139,6 @@ class pretrainDataset(Dataset):
             assert(not G_ctx.is_directed())
 
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
-            #print(anchor_nodes)
-            
             
             pair_label = 1 # positive pair 
             ctx_nodes = nodes_within_radius(G_ctx, u, inner=self.r1, outer=self.r2)
@@ -175,7 +173,7 @@ class pretrainDataset(Dataset):
             pair_label = 0 # negative pair 
             
         # Add anchor nodes as a node feature 
-        is_anchor = {node: torch.tensor(node in anchor_nodes) for node in G_ctx.nodes()}
+        is_anchor = {node: float(node in anchor_nodes) for node in G_ctx.nodes()}
         nx.set_node_attributes(G_ctx, name='anchor', values = is_anchor)
             
         
@@ -231,12 +229,7 @@ class pretrainDataset(Dataset):
         ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim=1)
         
         
-        if(self.EVAL): #TODO
-            raise NotImplementedError
-            labels = 0
-            return g_dgl, labels
-        else:
-            return g_dgl, ctx_g_dgl, u_idx, pair_label
+        return g_dgl, ctx_g_dgl, u_idx, pair_label
     
     def _get_edge_data(self):
         """
@@ -320,7 +313,7 @@ class Loader():
 
         if(not self.EVAL): # Pretraining phase : only train loader 
             train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                      num_workers=self.num_workers, collate_fn=collate_block)
+                                      num_workers=self.num_workers, collate_fn=collate_block, pin_memory=True)
             
             return train_loader, 0, 0
         
@@ -335,11 +328,7 @@ class Loader():
             return train_loader,0, test_loader
         
 if __name__=='__main__':
-    
-    graph = pickle.load(open('../data/debug_o/5i4a.pickle','rb'))
-    
-    for n in graph.nodes():
-        print(n, len(graph[n]))
+    pass
         
             
             

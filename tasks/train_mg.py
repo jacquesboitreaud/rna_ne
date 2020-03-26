@@ -30,7 +30,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.join(script_dir,'tasks_processing'))
     sys.path.append(os.path.join(script_dir,'..'))
     
-    from model import RGCN, classifLoss, draw_rec
+    from model_mg import RGCN, classifLoss, draw_rec
     from tasks_processing.mgDataset import mgDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=-1)
+                        type=int, default=40)
     parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
                         default=True)
     
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', type=bool, default=False)
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--batch_size', type=int, default=8)
     
     parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
     

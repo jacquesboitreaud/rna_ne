@@ -37,19 +37,19 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=-1)
+                        type=int, default=100)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
     parser.add_argument('--load_iter', type=int, default=410000)
     
-    parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
+    parser.add_argument('-p', '--num_processes', type=int, default=2) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=8)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=True)
+    parser.add_argument('--fix_seed', action='store_true', default=False)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     scheduler = lr_scheduler.ExponentialLR(optimizer, args.anneal_rate)
     print ("learning rate: %.6f" % scheduler.get_lr()[0])
 
-    #Train & test
+    #Training loop
     model.train()
     if(args.load_model):
         total_steps = args.load_iter
@@ -153,7 +153,7 @@ if __name__ == "__main__":
             h_anchors = torch.zeros_like(h_v)
             ctx_graphs = dgl.unbatch(ctx_graph)
             for k in range(len(ctx_graphs)):
-                is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b]
+                is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b>0]
                 h = ctx_graphs[k].ndata['h']
                 h_anchors[k] = torch.mean(h[is_anchor])
                 
