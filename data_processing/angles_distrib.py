@@ -16,7 +16,12 @@ cpt=0
 graphs_cpt = 0
 d = {'chi':[],
      'psi':[],
-     'delta':[]}
+     'delta':[],
+     'alpha':[],
+     'beta':[],
+     'gamma':[],
+     'epsilon':[],
+     'zeta':[]}
 
 for gid in graphs:
     graphs_cpt+=1
@@ -29,9 +34,15 @@ for gid in graphs:
         
     for n, data in g.nodes(data=True):
         # Get angles 
-        d['chi'].append(data['chi'])
-        d['psi'].append(data['gly_base'])
-        d['delta'].append(data['delta'])
+        alpha, beta, gamma, delta, epsilon, zeta, chi, gly_base = data['angles']
+        d['chi'].append(chi)
+        d['psi'].append(gly_base)
+        d['delta'].append(delta)
+        d['gamma'].append(gamma)
+        d['beta'].append(beta)
+        d['alpha'].append(alpha)
+        d['zeta'].append(zeta)
+        d['epsilon'].append(epsilon)
     
 with open('angles_distrib.pickle', 'wb') as f:
     pickle.dump(d,f)
