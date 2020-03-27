@@ -44,5 +44,5 @@ for gid in graphs:
         d['zeta'].append(zeta)
         d['epsilon'].append(epsilon)
     
-with open('angles_distrib.pickle', 'wb') as f:
+with open('../data/angles_distrib.pickle', 'wb') as f:
     pickle.dump(d,f)
