@@ -4,14 +4,9 @@ Created on Sun Nov  3 17:11:42 2019
 
 @author: jacqu
 
-Reads off-the-shelf RNA graphs (structure using rna_classes.py)
-Preprocesses : 
-    removes dangling nodes 
-    Checks graph not empty
-    computes 3D node features (base angles)
-    adds nucleotide identity as a node feature
+Parses graphs and counts nucleotides with problems for angles computation 
 
-Parses graphs and counts nucleotides with missing coordinates and dangling nucleotides 
+Stores a dict of info for each graph 
   
 """
 

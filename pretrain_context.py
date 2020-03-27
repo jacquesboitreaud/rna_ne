@@ -43,18 +43,18 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', type=bool, default=False)
     parser.add_argument('--load_iter', type=int, default=410000)
     
-    parser.add_argument('-p', '--num_processes', type=int, default=2) # Number of loader processes
+    parser.add_argument('-p', '--num_processes', type=int, default=8) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=25)
     parser.add_argument('--batch_size', type=int, default=8)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=False)
+    parser.add_argument('--fix_seed', action='store_true', default=True)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN
     parser.add_argument('--r1', type=int, default=1) # Context ring inner radius
-    parser.add_argument('--r2', type=int, default=3) # Context out radius
+    parser.add_argument('--r2', type=int, default=2) # Context out radius
 
     parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     # config
-    feats_dim, h_size, out_size=3, 16, 32 # dims 
+    feats_dim, h_size, out_size=12, 16, 32 # dims 
     
     # Train_dir 
     if(not args.debug):
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     loaders = Loader(path=td ,
                      simplified_edges=True,
                      radii_params=(args.K,args.r1, args.r2),
-                     attributes = ['delta','chi','gly_base'],
+                     attributes = ['angles', 'identity'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
                      num_workers=args.num_processes, 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
             
             #Print & log
             per_item_loss = t_loss.item()/batch_size
-            train_ep_loss += per_item_loss
+            train_ep_loss += t_loss.item()
             if total_steps % args.log_iter == 0:
                 figure = draw_rec(dotprod.view(-1,1), labels.view(-1,1))
                 writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
@@ -186,8 +186,8 @@ if __name__ == "__main__":
                 torch.save( model.state_dict(), f"{args.save_path[:-4]}_iter_{total_steps}.pth")
                 
         # Epoch logging 
-        writer.add_scalar('epochLossPerItem/train', train_ep_loss/len(train_loader), epoch)
-        print(f'Epoch {epoch}, avg loss per item : {train_ep_loss/len(train_loader)}')
+        writer.add_scalar('epochLoss/train', train_ep_loss, epoch)
+        print(f'Epoch {epoch}, total loss : {train_ep_loss}')
         
         
         

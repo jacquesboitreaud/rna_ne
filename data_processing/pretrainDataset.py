@@ -117,8 +117,8 @@ class pretrainDataset(Dataset):
             np.random.seed(10)
         
         # pick a graph at random 
-        #gidx = np.random.randint(self.n_graphs)
-        gid = self.all_graphs[idx]
+        gidx = np.random.randint(self.n_graphs)
+        gid = self.all_graphs[gidx]
         
         with open(os.path.join(self.path, gid),'rb') as f:
             G = pickle.load(f)
@@ -225,8 +225,11 @@ class pretrainDataset(Dataset):
                 print(nx.get_node_attribute(G_ctx,a))
             
         # Init node embeddings with nodes features
-        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim = 1)
-        ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim=1)
+        #if('identity') in self.attributes:
+        floatid = g_dgl.ndata['identity'].float()
+        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['angles'], floatid], dim = 1)
+        floatid = ctx_g_dgl.ndata['identity'].float()
+        ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata['angles'],floatid], dim=1)
         
         
         return g_dgl, ctx_g_dgl, u_idx, pair_label
