@@ -100,19 +100,25 @@ class pretrainDataset(Dataset):
             self.num_edge_types = len(self.edge_map)
             print(f"found {self.num_edge_types} edge types, frequencies: {self.edge_freqs}")
         else:
-            self.num_edge_types=2
+            self.num_edge_types=3
             print(f"Using simplified edge representations. {self.num_edge_types} categories of edges")
             # Edge map with Backbone (0) and pairs (1)
             #TODO handle stackings S33 S35 S53 S55
             self.edge_map={'B35':0,
-                      'B53':0}
+                      'B53':0,
+                      'S33':1,
+                      'S35':1,
+                      'S53':1,
+                      'S55':1}
         
     def _get_simple_etype(self,label):
         # Returns index of edge type for an edge label
         if(label in ['B35','B53']):
             return torch.tensor(0)
-        else:
-            return torch.tensor(1) # Non canonical edges category
+        elif(label in ['S33' ,'S35' ,'S53', 'S55']):
+            return torch.tensor(1) 
+        else:   # Base interaction edges category
+            return torch.tensor(2)
             
     def __len__(self): # Number of samples in epoch : should be >> n_graphs (1 sample = 1 node)
         return self.n_graphs*100

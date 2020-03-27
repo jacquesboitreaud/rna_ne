@@ -144,15 +144,27 @@ def generic_draw_pair(graphs, title="", highlight_edges=None, node_colors=None, 
     
     
 def ablation_draw():
-    g_name = "../data/chunks/1a1t.pickle"
-    modes = ['', '_bb-only', '_wc-bb', '_wc-bb-nc', '_no-label', '_label-shuffle']
-    for m in modes:
-        #g_dir = "../data/annotated/pockets_nx" + m
-        #g,_,_,_ = pickle.load(open(os.path.join(g_dir, g_name), 'rb'))
-        if(m=='_wc-bb-nc'):
-            g = pickle.load(open(g_name, 'rb'))
-            rna_draw(g, title=m)
-    pass
+    g_name = "../data/chunks/1aq4.pickle"
+    
+    bads = []
+    
+    remove_stackings = True
+    merge_stackings = False
+
+    g = pickle.load(open(g_name, 'rb'))
+    e=nx.get_edge_attributes(g,'label')
+    for u,v,e in g.edges(data=True):
+        print(u,v,e)
+        if(e['label'] not in ('B35', 'B53')):
+            if(e['label'] in ('S35','S53','S55','S33') and remove_stackings):
+                bads.append((u,v))
+            elif(merge_stackings):
+                e['label']='CWW'
+            elif(e['label'] not in ('S35','S53','S55','S33')):
+                e['label']='CWW'
+    g.remove_edges_from(bads)
+    print(e)
+    rna_draw(g, title='')
 
 if __name__ == "__main__":
     ablation_draw()

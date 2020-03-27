@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 import pickle
 
-with open('C:/Users/jacqu/Documents/GitHub/DeepFRED/data_processing/angles_distrib.pickle', 'rb') as f :
+with open('C:/Users/jacqu/Documents/GitHub/angles_distrib.pickle/angles_distrib.pickle', 'rb') as f :
     d = pickle.load(f)
 
 
