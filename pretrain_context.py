@@ -45,11 +45,11 @@ if __name__ == "__main__":
     
     parser.add_argument('-p', '--num_processes', type=int, default=8) # Number of loader processes
     
-    parser.add_argument('--epochs', type=int, default=25)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=128)
     
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--fix_seed', action='store_true', default=True)
+    parser.add_argument('--fix_seed', action='store_true', default=False)
 
     #Context prediction parameters 
     parser.add_argument('--K', type=int, default=1) # Number of hops of our GCN

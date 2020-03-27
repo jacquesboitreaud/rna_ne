@@ -115,7 +115,7 @@ class pretrainDataset(Dataset):
             return torch.tensor(1) # Non canonical edges category
             
     def __len__(self): # Number of samples in epoch : should be >> n_graphs (1 sample = 1 node)
-        return self.n_graphs
+        return self.n_graphs*100
     
     def __getitem__(self, idx):
         
