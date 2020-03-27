@@ -36,8 +36,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
-    parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=100)
+    parser.add_argument("--cutoff", help="Max number of train graphs. Set to -1 for all in dir", 
+                        type=int, default=4000)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--num_processes', type=int, default=8) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=25)
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--batch_size', type=int, default=128)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=True)

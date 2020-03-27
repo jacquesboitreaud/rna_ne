@@ -48,27 +48,25 @@ if __name__ == "__main__":
     annot_dir = args.write_dir
     
     large = []
+    cpt=0
     
     for pdb_id in os.listdir(gr_dir):
+        cpt+=1
+        if(cpt%100)==0:
+            print(cpt)
          
-         print(f'Reading {pdb_id}')
-         
-         # Load graph  
-         g = pickle.load(open(os.path.join(gr_dir,pdb_id), 'rb'))
+        # Load graph  
+        g = pickle.load(open(os.path.join(gr_dir,pdb_id), 'rb'))
         
-         # 1/ Remove dangling nodes from graph 
+        # 1/ Remove dangling nodes from graph 
         
-         nodes =g.nodes(data=True)
-         N = g.number_of_nodes()
+        nodes =g.nodes(data=True)
+        N = g.number_of_nodes()
          
-         if(N>1000):
-             print('large graph , ', N)
-             large.append(pdb_id)
+        if(N>1000):
+            print('large graph , ', N)
+            large.append(pdb_id)
              
              
-with open('bad_graphs.pickle','rb') as f:
-    bads = pickle.load(f)
-    
-bads = set(bads)
-large = set(large)
-ist = large.intersection(bads)
+with open('large_graphs.pickle','wb') as f:
+    pickle.dump(large,f)

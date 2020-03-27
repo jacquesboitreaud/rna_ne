@@ -71,11 +71,18 @@ class pretrainDataset(Dataset):
         self.path = rna_graphs_path
         
         if(N_graphs!=None):
-            self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number
+            all_graphs_set = os.listdir(self.path)[:N_graphs] # Cutoff number
         else:
-            self.all_graphs = list(os.listdir(self.path)) 
-            np.random.seed(10)
-            np.random.shuffle(self.all_graphs)
+            all_graphs_set = os.listdir(self.path)
+            
+        all_graphs_set = set(all_graphs_set)
+            
+        # Take only small graphs for now : 
+        large_gr = set(pickle.load(open('large_graphs.pickle','rb')))
+        self.all_graphs = list(all_graphs_set.difference(large_gr))
+        
+        np.random.seed(10)
+        np.random.shuffle(self.all_graphs)
             
         self.n_graphs=len(self.all_graphs)
         
