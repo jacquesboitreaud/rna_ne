@@ -42,7 +42,7 @@ if (__name__ == "__main__"):
     parser.add_argument('-i', '--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=100)
-    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0.pth')
+    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_iter_70000.pth')
     # Where to save graphs with embeddings
     parser.add_argument('-o', '--savedir', type=str, default = 'data/with_embeddings')
     parser.add_argument('--batch_size', type=int, default = 16)
@@ -53,11 +53,13 @@ if (__name__ == "__main__"):
     args=parser.parse_args()
 
     # config
-    feats_dim, h_size, out_size=6, 4, 64 # dims 
+    feats_dim, h_size, out_size=12, 16, 32 # dims 
+    r1 = 1
+    r2= 2
     
     #Loaders
     loaders = Loader(path=args.train_dir ,
-                     attributes = ['A','U','G','C','chi','gly_base'],
+                     attributes = ['angles', 'identity'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
                      true_edges=True, # Add the true edge types as an edge feature for validation & clustering
@@ -68,7 +70,7 @@ if (__name__ == "__main__"):
         pickle.dump(loaders.dataset.true_edge_map, f)
     
     N_edge_types = loaders.num_edge_types
-    train_loader, test_loader, _ = loaders.get_data()
+    loader, _,_ = loaders.get_data()
     
     #Model & hparams
     #device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -77,7 +79,7 @@ if (__name__ == "__main__"):
     
     # Model instance contains GNN and context GNN 
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, radii_params=(1,1,3), num_bases=-1).to(device).float()
+                  num_rels=N_edge_types, radii_params=(1,r1,r2), num_bases=-1).to(device).float()
 
     model.load_state_dict(torch.load(args.load_model_path))
 
@@ -87,8 +89,9 @@ if (__name__ == "__main__"):
     
     # Pass graphs to model and get node embeddings 
     model.eval()
+    cpt=0
     with torch.no_grad():
-        for batch_idx, (graph, pdb_ids) in enumerate(test_loader):
+        for batch_idx, (graph, pdb_ids) in enumerate(loader):
 
             graph=send_graph_to_device(graph,device)
 
@@ -104,6 +107,8 @@ if (__name__ == "__main__"):
                 
                 with open(os.path.join(args.savedir,pdb_ids[i]+'.pickle'),'wb') as f:
                     pickle.dump(nx_g, f)
+                cpt +=1 
+    print(f'Saved {cpt} graphs with embeddings in ~/{args.savedir}')
             
             
 

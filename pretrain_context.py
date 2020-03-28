@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--num_processes', type=int, default=8) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=256)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -60,9 +60,9 @@ if __name__ == "__main__":
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
 
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
-    parser.add_argument('--anneal_iter', type=int, default=10000) # update learning rate every _ step
+    parser.add_argument('--anneal_iter', type=int, default=40000) # update learning rate every _ step
     parser.add_argument('--log_iter', type=int, default=100) # print loss metrics every _ step
-    parser.add_argument('--save_iter', type=int, default=5000) # save model weights every _ step
+    parser.add_argument('--save_iter', type=int, default=10000) # save model weights every _ step
 
      # =======
 

@@ -31,8 +31,10 @@ if __name__ == '__main__':
     
     args=parser.parse_args()
     
+    # Params 
     data_dir = args.graphs_dir
     graphs = os.listdir(data_dir)
+    emb_size = 32
     
     with open('../data/true_edge_map.pickle','rb') as f:
         edgemap = pickle.load(f)
@@ -40,7 +42,7 @@ if __name__ == '__main__':
     etypes = {l:t for (t,l) in loaders.dataset.true_edge_map.items()}
     cpt = 0 # nbr of nodes read 
     
-    embeddings = torch.zeros(10000,64)
+    embeddings = torch.zeros(10000,emb_size)
     # Dict to collect embeddings, per edge type 
     d= {l:[] for l in etypes.values()}
     
@@ -73,8 +75,19 @@ if __name__ == '__main__':
     x2d = pca.fit_transform(embeddings)     
         
     # plot 
+    stackings = {'S33', 'S35', 'S53', 'S55'}
+    b = {'B35', 'B53'}
+    canonical = {'CWW'}
+    union = {'S33', 'S35', 'S53', 'S55', 'B35', 'B53', 'CWW'}
+    nc = {e for e in d.keys() if (e not in union)}
+    
     for etype, indexes in d.items():
-        if(etype in ['CWW', 'CWS', 'CSW', 'CHS', 'CSH', 'CWH','CHW']):
+        if(etype in stackings):
             subtype = x2d[indexes,:]
-            sns.scatterplot(subtype[:,0], subtype[:,1], label = etype)
-            plt.legend()
+            sns.scatterplot(subtype[:,0], subtype[:,1], color='g')
+        if(etype in canonical):
+            subtype = x2d[indexes,:]
+            sns.scatterplot(subtype[:,0], subtype[:,1], color='b')
+        if(etype in nc):
+            subtype = x2d[indexes,:]
+            sns.scatterplot(subtype[:,0], subtype[:,1], color='r')

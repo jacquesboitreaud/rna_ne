@@ -82,19 +82,25 @@ class rnaDataset(Dataset):
             self.num_true_edge_types = len(self.true_edge_map)
             print(f"found {self.num_true_edge_types} FR3D edge types, frequencies: {self.true_edge_freqs}")
         
-        # the simplified labels to feed the GNN with (0,1)
-        self.num_edge_types=2
-        # Edge map with Backbone (0) and pairs (1)
+        # the simplified edge labels to feed the GNN 
+        self.num_edge_types=3
+        # Edge map with Backbone (0) , stackings (1) and pairs (2)
         self.edge_map={'B35':0,
-                  'B53':0}
+                      'B53':0,
+                      'S33':1,
+                      'S35':1,
+                      'S53':1,
+                      'S55':1}
         
         
     def _get_simple_etype(self,label):
         # Returns index of edge type for an edge label
         if(label in ['B35','B53']):
             return torch.tensor(0)
-        else:
-            return torch.tensor(1) # Non canonical edges category
+        elif(label in ['S33' ,'S35' ,'S53', 'S55']):
+            return torch.tensor(1) 
+        else:   # Base interaction edges category
+            return torch.tensor(2)
             
     def __len__(self):
         return self.n
@@ -129,7 +135,8 @@ class rnaDataset(Dataset):
             g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], node_attrs = self.attributes)
         
         # Init node embeddings with nodes features
-        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim = 1)
+        floatid = g_dgl.ndata['identity'].float()
+        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['angles'], floatid], dim = 1)
         
         # Return pair graph, pdb_id
         return g_dgl, pdb
@@ -161,8 +168,7 @@ class Loader():
                  attributes,
                  batch_size=32,
                  num_workers=0,
-                 true_edges = True,
-                 EVAL=False):
+                 true_edges = True):
         
         """
         Wrapper for test loader, train loader 
@@ -181,7 +187,6 @@ class Loader():
                                   attributes = attributes,
                                   add_true_edges = true_edges)
         self.num_edge_types = self.dataset.num_edge_types
-        self.EVAL=EVAL
         
         print(f'***** {len(attributes)} node attributes will be used: {attributes}'  )
 
@@ -191,7 +196,7 @@ class Loader():
         indices = list(range(n))
         # np.random.shuffle(indices)
         np.random.seed(0)
-        split_train, split_valid = 0.5, 1
+        split_train, split_valid = 1, 1
         train_index, valid_index = int(split_train * n), int(split_valid * n)
 
 
@@ -199,32 +204,15 @@ class Loader():
         valid_indices = indices[train_index:valid_index]
         test_indices = indices[valid_index:]
         
-        if(self.EVAL):
-            train_set = Subset(self.dataset, train_indices[:1000]) # select just a small subset
-        else:
-            train_set = Subset(self.dataset, train_indices)
+        train_set = Subset(self.dataset, train_indices)
             
-        valid_set = Subset(self.dataset, valid_indices)
         #test_set = Subset(self.dataset, test_indices)
-        print(f"Train set contains {len(train_set)} samples")
+        print(f"Loaded dataset contains {len(train_set)} samples")
 
-        if(not self.EVAL): # Pretraining phase 
-            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                      num_workers=self.num_workers, collate_fn=collate_block)
-    
-            valid_loader = DataLoader(dataset=valid_set, shuffle=True, batch_size=self.batch_size,
-                                       num_workers=self.num_workers, collate_fn=collate_block)
-            
-            return train_loader, valid_loader, 0
-        
-        else: # Eval or visualization phase 
-            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
+        dataset_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
                                       num_workers=self.num_workers, collate_fn=collate_block)
             
-            test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
-                                 num_workers=self.num_workers, collate_fn=collate_block)
-
-            return train_loader,0, test_loader
+        return dataset_loader, 0, 0
         
 if __name__=='__main__':
     pass

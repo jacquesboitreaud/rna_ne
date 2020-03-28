@@ -59,11 +59,9 @@ class pretrainDataset(Dataset):
                  radii_params,
                  attributes,
                  simplified_edges,
-                 EVAL,
                  debug,
                  fix_seed):
         
-        self.EVAL=EVAL
         self.debug = debug
         if(self.debug):
             print('Debug prints set to True')
@@ -148,7 +146,7 @@ class pretrainDataset(Dataset):
         r = int(idx%2==0)
         
         if(r>0.5): # positive context 
-            G_ctx = nx.Graph(G)
+            G_ctx = nx.MultiGraph(G)
             assert(not G_ctx.is_directed())
 
             anchor_nodes = [n for n in G_ctx.neighbors(u)]
@@ -173,7 +171,7 @@ class pretrainDataset(Dataset):
             
             u_neg_idx = np.random.randint(N)
             
-            G_ctx = nx.Graph(G_ctx)
+            G_ctx = nx.MultiGraph(G_ctx)
             u_neg = sorted(G_ctx.nodes)[u_neg_idx]
             
             anchor_nodes = [n for n in G_ctx.neighbors(u_neg)]
@@ -191,7 +189,7 @@ class pretrainDataset(Dataset):
             
         
         # Cut graph to radius K around node u : K=1, neighbours of u 
-        G=nx.Graph(G)
+        G=nx.MultiGraph(G)
         assert(not G.is_directed())
         local_nodes = [n for n in G.neighbors(u)] 
         local_nodes.append(u)
@@ -277,14 +275,10 @@ class Loader():
                  num_workers=0,
                  debug=False,
                  simplified_edges=True,
-                 EVAL=False, 
                  fix_seed=False):
         """
         Wrapper for test loader, train loader 
         Uncomment to add validation loader 
-        
-        EVAL returns just the test loader 
-        else, returns train, valid, 0
 
         """
 
@@ -295,12 +289,10 @@ class Loader():
                                   emb_size=emb_size,
                                   radii_params = radii_params,
                                   attributes = attributes,
-                                  EVAL=EVAL,
                                   debug=debug,
                                   simplified_edges=simplified_edges, 
                                   fix_seed = fix_seed)
         self.num_edge_types = self.dataset.num_edge_types
-        self.EVAL=EVAL
         
         print(f'***** {len(attributes)} node attributes will be used: {attributes}'  )
 
@@ -318,30 +310,17 @@ class Loader():
         valid_indices = indices[train_index:valid_index]
         test_indices = indices[valid_index:]
         
-        if(self.EVAL):
-            train_set = Subset(self.dataset, train_indices[:1000]) # select just a small subset
-        else:
-            train_set = Subset(self.dataset, train_indices)
-            
-        valid_set = Subset(self.dataset, valid_indices)
+
+        train_set = Subset(self.dataset, train_indices)
+        
         #test_set = Subset(self.dataset, test_indices)
         print(f"Train set contains {len(train_set)} samples")
 
-        if(not self.EVAL): # Pretraining phase : only train loader 
-            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
+        # Pretraining phase : only train loader 
+        train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
                                       num_workers=self.num_workers, collate_fn=collate_block, pin_memory=True)
             
-            return train_loader, 0, 0
-        
-        else: # Eval or visualization phase 
-            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                      num_workers=self.num_workers, collate_fn=collate_block)
-            
-            test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
-                                 num_workers=self.num_workers, collate_fn=collate_block)
-
-
-            return train_loader,0, test_loader
+        return train_loader, 0, 0
         
 if __name__=='__main__':
     pass
