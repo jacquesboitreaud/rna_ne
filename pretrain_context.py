@@ -28,7 +28,7 @@ if __name__ == "__main__":
     sys.path.append(script_dir)
     sys.path.append(os.path.join(script_dir,'data_processing'))
     
-    from model import Model, pretrainLoss, draw_rec
+    from model2 import Model, pretrainLoss, draw_rec
     from data_processing.pretrainDataset import pretrainDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train graphs. Set to -1 for all in dir", 
-                        type=int, default=200)
+                        type=int, default=3000)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--num_processes', type=int, default=8) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--batch_size', type=int, default=128)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('--r1', type=int, default=1) # Context ring inner radius
     parser.add_argument('--r2', type=int, default=2) # Context out radius
 
-    parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
+    parser.add_argument('--lr', type=float, default=1e-4) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
 
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     if(not args.debug):
         train_nodes = pickle.load(open('data_processing/train_nodes.pickle','rb'))
     else:
-        train_nodes = pickle.load(open('data_processing/valid_nodes.pickle','rb'))
+        train_nodes = pickle.load(open('data_processing/debug_nodes.pickle','rb'))
     
     #Loaders
     loaders = Loader(path = args.train_dir,
@@ -160,7 +160,8 @@ if __name__ == "__main__":
                 
             
             #Compute loss
-            t_loss, dotprod = pretrainLoss(h_v, h_anchors, labels, v=False, show=bool(total_steps%args.log_iter==0))
+            t_loss, dotprod = pretrainLoss(h_v, h_anchors, labels, v=False, show=bool(total_steps%args.log_iter==0 
+                                                                                      and batch_size<128))
             optimizer.zero_grad()
             t_loss.backward()
             

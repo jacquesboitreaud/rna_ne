@@ -120,7 +120,7 @@ class pretrainDataset(Dataset):
         
         #Fix random seed for all other samplings 
         if(self.fix_seed):
-            np.random.seed(10)
+            random.seed(10)
         
         # pick a graph  and node at random 
         gid = random.choice(self.all_graphs)
@@ -286,8 +286,7 @@ class Loader():
         n = len(self.dataset)
         print(f"Splitting dataset with {n} samples")
         indices = list(range(n))
-        # np.random.shuffle(indices)
-        np.random.seed(0)
+
         split_train, split_valid = 1, 1
         train_index, valid_index = int(split_train * n), int(split_valid * n)
 
