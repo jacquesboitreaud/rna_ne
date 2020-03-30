@@ -29,15 +29,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing already processed graphs", 
-                        type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
-    parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
-                        type=int, default=40)
-    
-    parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
-    
-    parser.add_argument('-d', "--debug", help="debug", 
-                        type=bool, default=True)
     
      # =======
 
@@ -45,7 +37,6 @@ if __name__ == "__main__":
     
     # Hyperparams 
     gr_dir = args.graphs_dir
-    annot_dir = args.write_dir
     
     large = []
     cpt=0
@@ -63,8 +54,8 @@ if __name__ == "__main__":
         nodes =g.nodes(data=True)
         N = g.number_of_nodes()
          
-        if(N>1000):
-            print('large graph , ', N)
+        if(N>1600 or N < 8):
+            print('too large / too small graph , ', N)
             large.append(pdb_id)
              
              

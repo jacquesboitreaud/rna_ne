@@ -18,6 +18,7 @@ import argparse
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
 
 if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -42,7 +43,14 @@ if __name__ == '__main__':
     etypes = {l:t for (t,l) in loaders.dataset.true_edge_map.items()}
     cpt = 0 # nbr of nodes read 
     
-    embeddings = torch.zeros(10000,emb_size)
+    stackings = {'S33', 'S35', 'S53', 'S55'}
+    b = {'B35', 'B53'}
+    canonical = {'CWW'}
+    union = {'S33', 'S35', 'S53', 'S55', 'B35', 'B53', 'CWW'}
+    nc = {e for e in d.keys() if (e not in union)}
+    
+    embeddings = torch.zeros(40000,emb_size)
+    labels = torch.zeros(40000)
     # Dict to collect embeddings, per edge type 
     d= {l:[] for l in etypes.values()}
     
@@ -55,6 +63,18 @@ if __name__ == '__main__':
         for (u,v, data) in g.edges(data=True):
             eid = data['true_ET'].item()
             etype = etypes[eid]
+            
+            if(etype in b):
+                continue
+            elif etype in stackings : 
+                labels[cpt]=0
+                labels[cpt+1]=0
+            elif etype in canonical :
+                labels[cpt]=1
+                labels[cpt+1]=1
+            else:
+                labels[cpt]=2
+                labels[cpt+1]=2
             
             u, v = g.nodes[u], g.nodes[v]
             h1, h2 = u['h'], v['h']
@@ -69,17 +89,13 @@ if __name__ == '__main__':
     # PCA fit all embeddings 
             
     embeddings = embeddings[:cpt+1,:]
+    labels = labels[:cpt+1]
     
     # PCA 
     pca = PCA(n_components=2)
     x2d = pca.fit_transform(embeddings)     
         
     # plot 
-    stackings = {'S33', 'S35', 'S53', 'S55'}
-    b = {'B35', 'B53'}
-    canonical = {'CWW'}
-    union = {'S33', 'S35', 'S53', 'S55', 'B35', 'B53', 'CWW'}
-    nc = {e for e in d.keys() if (e not in union)}
     
     for etype, indexes in d.items():
         if(etype in stackings):
@@ -91,3 +107,6 @@ if __name__ == '__main__':
         if(etype in nc):
             subtype = x2d[indexes,:]
             sns.scatterplot(subtype[:,0], subtype[:,1], color='r')
+            
+s= silhouette_score(embeddings, labels, metric='l2')
+print('silhouette score ', s)
