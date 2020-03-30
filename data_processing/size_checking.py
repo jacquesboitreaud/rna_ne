@@ -54,7 +54,7 @@ if __name__ == "__main__":
         nodes =g.nodes(data=True)
         N = g.number_of_nodes()
          
-        if(N>1600 or N < 8):
+        if(N>5000 or N < 8):
             print('too large / too small graph , ', N)
             large.append(pdb_id)
              
