@@ -22,6 +22,7 @@ import numpy as np
 import itertools
 from collections import Counter
 import networkx as nx
+import random
 
 from tqdm import tqdm
 
@@ -53,7 +54,8 @@ class pretrainDataset(Dataset):
     """ 
     pytorch Dataset for training on pairs of nodes of RNA graphs 
     """
-    def __init__(self, rna_graphs_path,
+    def __init__(self, graphs_path,
+                 nodes_dict,
                  N_graphs,
                  emb_size,
                  radii_params,
@@ -66,21 +68,14 @@ class pretrainDataset(Dataset):
         if(self.debug):
             print('Debug prints set to True')
         self.fix_seed = fix_seed
-        self.path = rna_graphs_path
+        
+        self.path = graphs_path
+        self.nodes_dict = nodes_dict 
         
         if(N_graphs!=None):
-            all_graphs_set = os.listdir(self.path)[:N_graphs] # Cutoff number
+            self.all_graphs = sorted(self.nodes_dict)[:N_graphs] # Cutoff number
         else:
-            all_graphs_set = os.listdir(self.path)
-            
-        all_graphs_set = set(all_graphs_set)
-            
-        # Take only small graphs for now : 
-        large_gr = set(pickle.load(open('large_graphs.pickle','rb')))
-        self.all_graphs = list(all_graphs_set.difference(large_gr))
-        
-        np.random.seed(10)
-        np.random.shuffle(self.all_graphs)
+            self.all_graphs = sorted(self.nodes_dict)
             
         self.n_graphs=len(self.all_graphs)
         
@@ -119,7 +114,7 @@ class pretrainDataset(Dataset):
             return torch.tensor(2)
             
     def __len__(self): # Number of samples in epoch : should be >> n_graphs (1 sample = 1 node)
-        return self.n_graphs*100
+        return 1576237
     
     def __getitem__(self, idx):
         
@@ -127,20 +122,13 @@ class pretrainDataset(Dataset):
         if(self.fix_seed):
             np.random.seed(10)
         
-        # pick a graph at random 
-        gidx = np.random.randint(self.n_graphs)
-        gid = self.all_graphs[gidx]
+        # pick a graph  and node at random 
+        gid = random.choice(self.all_graphs)
+        u = random.choice(self.nodes_dict[gid])
         
         with open(os.path.join(self.path, gid),'rb') as f:
             G = pickle.load(f)
-        G.to_undirected() # Undirected graph 
-         
-        # Pick a node at random : 
-        N = G.number_of_nodes()
-        u_idx = np.random.randint(N)
-        
-        # Selected node has idx u_idx in sorted(G.nodes) // coherent with dgl reindexing
-        u = sorted(G.nodes)[u_idx]
+        G.to_undirected() # Undirected graph
         
         # Random sample positive or negative context 'deterministic but 'idx' unused elsewhere
         r = int(idx%2==0)
@@ -160,19 +148,16 @@ class pretrainDataset(Dataset):
             
             
         else:
-            neg = np.random.randint(self.n_graphs)
-            ngid = self.all_graphs[neg]
+            # Random sampling of node and graph 
+            ngid = random.choice(self.all_graphs)
+            u_neg = random.choice(self.nodes_dict[ngid])
             with open(os.path.join(self.path, ngid),'rb') as f:
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
-            N = G_ctx.number_of_nodes()
             
             assert(not G_ctx.is_directed())
             
-            u_neg_idx = np.random.randint(N)
-            
             G_ctx = nx.MultiGraph(G_ctx)
-            u_neg = sorted(G_ctx.nodes)[u_neg_idx]
             
             anchor_nodes = [n for n in G_ctx.neighbors(u_neg)]
             
@@ -187,7 +172,6 @@ class pretrainDataset(Dataset):
         is_anchor = {node: float(node in anchor_nodes) for node in G_ctx.nodes()}
         nx.set_node_attributes(G_ctx, name='anchor', values = is_anchor)
             
-        
         # Cut graph to radius K around node u : K=1, neighbours of u 
         G=nx.MultiGraph(G)
         assert(not G.is_directed())
@@ -267,6 +251,7 @@ class pretrainDataset(Dataset):
 class Loader():
     def __init__(self,
                  path,
+                 nodes_dict,
                  N_graphs,
                  emb_size,
                  radii_params, 
@@ -284,7 +269,8 @@ class Loader():
 
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.dataset = pretrainDataset(rna_graphs_path=path,
+        self.dataset = pretrainDataset(graphs_path=path, 
+                                       nodes_dict = nodes_dict ,
                                   N_graphs= N_graphs,
                                   emb_size=emb_size,
                                   radii_params = radii_params,

@@ -73,12 +73,13 @@ if __name__ == "__main__":
     
     # Train_dir 
     if(not args.debug):
-        td = args.train_dir
+        train_nodes = pickle.load(open('data_processing/train_nodes.pickle','rb'))
     else:
-        td = 'C:/Users/jacqu/Documents/GitHub/DEBUG'
+        train_nodes = pickle.load(open('data_processing/valid_nodes.pickle','rb'))
     
     #Loaders
-    loaders = Loader(path=td ,
+    loaders = Loader(path = args.train_dir,
+                    nodes_dict=train_nodes ,
                      simplified_edges=True,
                      radii_params=(args.K,args.r1, args.r2),
                      attributes = ['angles', 'identity'],
