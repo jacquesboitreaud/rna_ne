@@ -156,7 +156,7 @@ if __name__ == "__main__":
             for k in range(len(ctx_graphs)):
                 is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b>0]
                 h = ctx_graphs[k].ndata['h']
-                h_anchors[k] = torch.mean(h[is_anchor])
+                h_anchors[k] = torch.mean(h[is_anchor,:],dim=0)
                 
             
             #Compute loss
