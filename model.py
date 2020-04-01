@@ -62,7 +62,6 @@ class RGCN(nn.Module):
             h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels) #, activation=nn.ReLU())
             self.layers.append(h2o)
 
-
     def forward(self, g):
         #print('edge data size ', g.edata['one_hot'].size())
         #print('node data size ', g.ndata['h'].size())
@@ -90,9 +89,9 @@ class Model(nn.Module):
         self.K, self.r1, self.r2 = radii_params
         
         self.cgnn_layers = int(self.r2-self.r1)
+        assert(self.cgnn_layers==self.K) # Patch representations of radius 1 , context ring of width 1 
         print(' ************* Model initialisation *******************')
-        print(f'gnn has {self.K} layers')
-        print(f'context gnn has {self.cgnn_layers} layers')
+        print(f'gnn has {self.K} layers. ')
                 
         # create rgcn layers
         self.build_model()
@@ -101,13 +100,17 @@ class Model(nn.Module):
         
         self.GNN = RGCN(self.features_dim,self.h_dim, self.out_dim,self.num_rels,
                         self.num_bases, num_layers=self.K, pool=False)
-        self.ctx_GNN = RGCN(self.features_dim,self.h_dim, self.out_dim,self.num_rels,
-                        self.num_bases, num_layers=self.cgnn_layers , pool=False)
+        
+        self.linear=nn.Linear(self.out_dim, self.out_dim, bias=False)
         
     def forward(self, g, ctx_g):
         # Forward pass of both GNNs; embeddings stored in g.ndata['h']
         self.GNN(g)
-        self.ctx_GNN(ctx_g)
+        self.GNN(ctx_g)
+        
+    def linear_tf(self,h):
+        # Learnable linear transform of embeddings before applying contrastive loss
+        return self.linear(h)
 
         
 def draw_rec( prod, label, title = ''):
@@ -116,8 +119,8 @@ def draw_rec( prod, label, title = ''):
         """
         
         fig, (ax1, ax2) = plt.subplots(1, 2)
-        sns.heatmap(label.detach().numpy(), vmin=0, vmax=1, ax=ax1, square=True, cbar=False)
-        sns.heatmap(prod.detach().numpy(), vmin=0, vmax=1, ax=ax2, square=True, cbar=False,
+        sns.heatmap(label.cpu().detach().numpy(), vmin=0, vmax=1, ax=ax1, square=True, cbar=False)
+        sns.heatmap(prod.cpu().detach().numpy(), vmin=0, vmax=1, ax=ax2, square=True, cbar=False,
                     cbar_kws={"shrink": 1})
         ax1.set_title("Ground Truth")
         ax2.set_title("GCN")
@@ -126,7 +129,7 @@ def draw_rec( prod, label, title = ''):
         
         return fig
         
-def pretrainLoss(h_v, h_ctx, label, v=True, show = False):
+def pretrainLoss(h_v, h_ctx, label, v=False, show = False):
     # Context prediction loss
     #prod = torch.sigmoid(torch.bmm(h_v.unsqueeze(1),h_ctx.unsqueeze(2)).squeeze())
     prod = torch.bmm(h_v.unsqueeze(1),h_ctx.unsqueeze(2)).squeeze().view(-1,1)

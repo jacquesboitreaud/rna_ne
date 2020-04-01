@@ -41,6 +41,8 @@ if __name__ == '__main__':
         edgemap = pickle.load(f)
     
     etypes = {l:t for (t,l) in loaders.dataset.true_edge_map.items()}
+    # Dict to collect embeddings, per edge type 
+    d= {l:[] for l in etypes.values()}
     cpt = 0 # nbr of nodes read 
     
     stackings = {'S33', 'S35', 'S53', 'S55'}
@@ -51,8 +53,7 @@ if __name__ == '__main__':
     
     embeddings = torch.zeros(40000,emb_size)
     labels = torch.zeros(40000)
-    # Dict to collect embeddings, per edge type 
-    d= {l:[] for l in etypes.values()}
+
     
     for g in graphs:
         

@@ -5,7 +5,7 @@ Created on Wed Nov  6 18:44:04 2019
 
 Context prediction training on RNA graphs. 
 
-!! Only preprocessed RNA graphs should be in 'args.train_dir' (using os.listdir to list graphs)
+Version with no explicit negative sampling ; other samples in batch are taken as negative samples 
 
 """
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.join(script_dir,'data_processing'))
     
     from model import Model, pretrainLoss, draw_rec
-    from data_processing.pretrainDataset import pretrainDataset, Loader
+    from data_processing.pretrainDataset2 import pretrainDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
     
@@ -37,16 +37,16 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train graphs. Set to -1 for all in dir", 
-                        type=int, default=3000)
+                        type=int, default=40)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
-    parser.add_argument('--load_iter', type=int, default=10000) # Change to load desired model 
+    parser.add_argument('--load_iter', type=int, default=410000)
     
-    parser.add_argument('-p', '--num_processes', type=int, default=8) # Number of loader processes
+    parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=32)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
     parser.add_argument('--anneal_iter', type=int, default=40000) # update learning rate every _ step
-    parser.add_argument('--log_iter', type=int, default=100) # print loss metrics every _ step
+    parser.add_argument('--log_iter', type=int, default=5) # print loss metrics every _ step
     parser.add_argument('--save_iter', type=int, default=100) # save model weights every _ step
 
      # =======
@@ -132,14 +132,13 @@ if __name__ == "__main__":
         print(f'Starting epoch {epoch}')
         train_ep_loss, test_ep_loss = 0,0
         
-        for batch_idx, (graph, ctx_graph, u_index, labels) in enumerate(train_loader):
+        for batch_idx, (graph, ctx_graph, u_index) in enumerate(train_loader):
 
             total_steps+=1 # count training steps
             
 
             graph=send_graph_to_device(graph,device)
             ctx_graph=send_graph_to_device(ctx_graph,device)
-            labels = labels.to(device)
 
             # Forward pass
             model(graph, ctx_graph)
@@ -163,11 +162,19 @@ if __name__ == "__main__":
                 is_anchor = [i for i,b in enumerate(list(ctx_graphs[k].ndata['anchor'])) if b>0]
                 h = ctx_graphs[k].ndata['h']
                 h_anchors[k] = torch.mean(h[is_anchor,:],dim=0)
-                
             
+            # permute h_anchors 
+            h_anchors_perm = h_anchors[torch.randperm(batch_size),:]
+                
             #Compute loss
-            t_loss, dotprod = pretrainLoss(h_v, h_anchors, labels, v=False, show=bool(total_steps%args.log_iter==0 
-                                                                                      and batch_size<128))
+            labels_pos = torch.ones(batch_size,1).to(device)
+            labels_neg = torch.zeros(batch_size,1).to(device)
+            pos_loss, _ = pretrainLoss(h_v, h_anchors, labels_pos, 
+                                           show=bool(total_steps%args.log_iter==0 and batch_size<128))
+            neg_loss, _ = pretrainLoss(h_v, h_anchors_perm, labels_neg,
+                                    show=bool(total_steps%args.log_iter==0 and batch_size<128))
+            
+            t_loss = pos_loss + neg_loss
             optimizer.zero_grad()
             t_loss.backward()
             
@@ -175,8 +182,8 @@ if __name__ == "__main__":
             per_item_loss = t_loss.item()/batch_size
             train_ep_loss += t_loss.item()
             if total_steps % args.log_iter == 0:
-                figure = draw_rec(dotprod.view(-1,1), labels.view(-1,1))
-                writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
+                #figure = draw_rec(dotprod.view(-1,1), labels.view(-1,1))
+                #writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
                 writer.add_scalar('batchLoss/train', t_loss.item() , total_steps)
                 print('epoch {}, opt. step n°{}, loss per it. {:.2f}'.format(epoch, total_steps, per_item_loss))
             
