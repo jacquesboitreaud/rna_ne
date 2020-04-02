@@ -42,7 +42,7 @@ if (__name__ == "__main__"):
     parser.add_argument('-i', '--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=100)
-    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_iter_800.pth')
+    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_iter_7000.pth')
     # Where to save graphs with embeddings
     parser.add_argument('-o', '--savedir', type=str, default = 'data/with_embeddings')
     parser.add_argument('--batch_size', type=int, default = 16)

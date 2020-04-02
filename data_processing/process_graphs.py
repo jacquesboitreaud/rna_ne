@@ -37,7 +37,7 @@ if __name__ == "__main__":
                         type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
     
     parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
-                        type=int, default=200)
+                        type=int, default=1000)
     
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
