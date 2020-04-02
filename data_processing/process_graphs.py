@@ -30,7 +30,6 @@ if __name__ == "__main__":
     from data_processing.graph_utils import *
     from data_processing.angles import base_angles
     from data_processing.rna_classes import *
-    from data_processing.utils import *
     
     parser = argparse.ArgumentParser()
     
