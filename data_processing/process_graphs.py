@@ -149,8 +149,14 @@ if __name__ == "__main__":
             G = g.copy()
             G.remove_nodes_from(problem_nts)
             
-            # check all nodes have at least one neighbor:
+            # check number of nodes AND all nodes have at least one neighbor:
             
+            N1 = G.number_of_nodes()
+            if(N1<4): # Not enough nodes, do not process and do not save 
+                print('less than 4 nodes. passing')
+                bads+=1
+                continue # empty graph, do not process and do not save 
+
             nbr_neigh = [len(G[n]) for n in G.nodes()]
             m = min(nbr_neigh)
             if(m==0): # Do not save this graph : one node is lonely . 
@@ -158,11 +164,7 @@ if __name__ == "__main__":
                 bads+=1
                 continue
             
-            N1 = G.number_of_nodes()
-            if(N1<4): # Not enough nodes, do not process and do not save 
-                print('less than 4 nodes. passing')
-                bads+=1
-                continue # empty graph, do not process and do not save 
+
                 
             nucleotides_counter += N1
             
