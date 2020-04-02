@@ -36,6 +36,7 @@ if __name__ == "__main__":
     
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
                         type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
+    
     parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
                         type=int, default=200)
     
@@ -45,6 +46,9 @@ if __name__ == "__main__":
     parser.add_argument('-d', "--debug", help="debug", 
                         type=bool, default=True)
     
+    parser.add_argument('-hr', "--high_res", help="Use only high resolution PDB structures (406 samples).", 
+                        type=bool, default=True)
+    
      # =======
 
     args=parser.parse_args()
@@ -52,14 +56,17 @@ if __name__ == "__main__":
     # Hyperparams 
     gr_dir = args.graphs_dir
     annot_dir = args.write_dir
+    high_res_struc = pickle.load(open('data_exploration/high_res_pdb.pickle','rb'))
+    if(args.high_res):
+        print(f'>>> Parsing {len(high_res_struc)} high resolution structures')
+        annot_dir = annot_dir + '_HR'
     
-    angles = ['alpha', 'beta', 'gamma',  'delta', 'epsilon', 'zeta', 'chi', 'gly_base']
     nucleotides_id = {'A':0,
                       'U':1,
                       'G':2,
                       'C':3}
     
-    print(f'Calculating {len(angles)} angles for each nt.')
+    print(f'>>> Calculating torsion angles and base normal vectors, for each nt.')
     print(f'Graphs with node features will be saved to {annot_dir}')
     
     cpt, bads =0,0
@@ -72,18 +79,19 @@ if __name__ == "__main__":
     for pdb_id in os.listdir(gr_dir):
         
         if(cpt<args.cutoff):
-            cpt+=1
-            print(f'Reading {pdb_id}')
-        
-            if pdb_id in bad_graphs:
+            
+            if (pdb_id  not in high_res_struc):
                 #print('ignoring graph')
                 continue
-            
+            cpt+=1
+            print(f'Reading {pdb_id}')
             # Dict for new node attributes 
             node_attrs = {}
             problem_nts = []
             
             node_attrs['angles']={} # dict to store angle values for each node
+            node_attrs['base_normal_vec']={} # angles of base normal vectors 
+            
             node_attrs['identity']={} # dict to store nucleotide identity for each node 
         
             # Load graph  
@@ -127,12 +135,14 @@ if __name__ == "__main__":
     
                     # Angles : 
                     angles = base_angles(nucleotide, prev_nt, next_nt)
+                    base_normal_vec = norm_base_angles(nucleotide)
                     nonzero = np.count_nonzero(angles)
                     if(nonzero<8): # Missing angles 
                         problem_nts.append(n) 
                         
                     # Store in node attributes dict 
                     node_attrs['angles'][n]=angles
+                    node_attrs['base_norm_vec'][n]=base_normal_vec
             
             # ========= Create features and check all angles !=0 =============
         

@@ -13,9 +13,12 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 import pickle
+import pandas as pd
 
-with open('C:/Users/jacqu/Documents/GitHub/angles_distrib.pickle/angles_distrib.pickle', 'rb') as f :
+with open('angles_distrib_HR.pickle', 'rb') as f :
     d = pickle.load(f)
+    
+df = pd.DataFrame.from_dict(d)
 
 
 plt.figure()
@@ -60,5 +63,19 @@ sns.distplot(d['psi'], label='psi angle')
 plt.xlabel('angle (rad)')
 plt.legend()
 
+# Psi grouped by nucleotide : 
 
+dfA = df[df['nt']=='A']
+dfC = df[df['nt']=='C']
+dfU = df[df['nt']=='U']
+dfG = df[df['nt']=='G']
+
+plt.figure()
+sns.distplot(dfA['psi'], label='psi angle A')
+sns.distplot(dfU['psi'], label='psi angle U')
+sns.distplot(dfG['psi'], label='psi angle G')
+sns.distplot(dfC['psi'], label='psi angle C')
+plt.title('Base inclination angle by nucleotide type')
+plt.xlabel('angle (rad)')
+plt.legend()
 

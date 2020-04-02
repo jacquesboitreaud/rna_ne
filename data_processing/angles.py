@@ -220,7 +220,50 @@ def base_angles(nucleotide, nt_prev=None, nt_next=None):
             
     return [alpha, beta, gamma, delta, epsilon, zeta, chi, base_gly] # 8 angles output 
 
-
+def norm_base_angles(nucleotide):
+    # Computes angles phi, psi of the normal vector to the base plane 
+    atoms = nucleotide.atoms
+    # center G 
+    gx, gy, gz = center(atoms)
+    
+    if (nucleotide.nt in ('G','A')): # Purine, chi = O4'-C1' // N9-C4
+        
+        n_base = [a for a in atoms if a.atom_label =="N9"]
+        
+        if len(n_base)==1:
+            n_base = n_base[0]
+    
+    elif (nucleotide.nt in ('U','C')): #Pyrimidine , chi = O4'-C1' // N1-C2
+        
+        n_base = [a for a in atoms if a.atom_label =="N1"]
+        
+        if len(n_base)==1:
+            n_base = n_base[0]
+            
+    c5 = [a for a in atoms if a.atom_label =="C5"]
+    if(len(c5)>0):
+        c5 = c5[0]
+    
+    try:
+        # vector G-N
+        u = -1*np.array([float(gx)-float(n_base.x), float(gy)-float(n_base.y), float(gz)-float(n_base.z) ])
+        # vector G-C5 
+        v = -1*np.array([float(c5.x)-float(n_base.x), float(c5.y)-float(n_base.y), float(c5.z)-float(n_base.z) ])
+        
+        # normal vec 
+        n = np.cross(u,v)
+        n=norm(n)
+    except:
+        return 0,0
+    
+    r=np.sqrt(n[0]**2+n[1]**2+n[2]**2)
+    # radial coordinates angles 
+    phi = np.arctan(n[1]/n[0])
+    theta = np.arccos(n[2]/r)
+    
+    return theta, phi
+    
+    
 if __name__=='__main__':
     
     # Load a sample graph 
@@ -236,7 +279,7 @@ if __name__=='__main__':
             print('pdb position : ', nucleotide.pdb_pos)
             
             print('nt angles: ')
-            print(base_angles(nucleotide))
+            print(norm_base_angles(nucleotide))
 
         
 
