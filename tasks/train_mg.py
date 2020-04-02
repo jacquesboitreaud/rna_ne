@@ -37,7 +37,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_graphs')
+    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='../../../MEGAsync Downloads/mg_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=40)
     parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
