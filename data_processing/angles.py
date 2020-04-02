@@ -84,7 +84,10 @@ def center(atoms):
             cy += float(a.y)
             cz += float(a.z)
             cpt+=1
-    return (cx/cpt, cy/cpt, cz/cpt)
+    if(cpt >0):
+        return (cx/cpt, cy/cpt, cz/cpt)
+    else:
+        return (0,0,0)
 
 def base_angles(nucleotide, nt_prev=None, nt_next=None):
     """
@@ -225,6 +228,8 @@ def norm_base_angles(nucleotide):
     atoms = nucleotide.atoms
     # center G 
     gx, gy, gz = center(atoms)
+    if((gx,gy,gz)==(0,0,0)):
+        return 0,0
     
     if (nucleotide.nt in ('G','A')): # Purine, chi = O4'-C1' // N9-C4
         
