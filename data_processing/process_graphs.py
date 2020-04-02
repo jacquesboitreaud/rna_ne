@@ -28,7 +28,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.join(script_dir, '..'))
 
     from data_processing.graph_utils import *
-    from data_processing.angles import base_angles
+    from data_processing.angles import base_angles, norm_base_angles
     from data_processing.rna_classes import *
     
     parser = argparse.ArgumentParser()
