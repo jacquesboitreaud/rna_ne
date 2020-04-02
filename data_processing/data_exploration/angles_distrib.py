@@ -12,7 +12,7 @@ import os
 import sys
 sys.path.append('..')
 
-gr_dir = '../../data/chunks'
+gr_dir = '../../data/chunks_HR'
 high_res_list = pickle.load(open('high_res_pdb.pickle', 'rb'))
 
 graphs = os.listdir(gr_dir)
