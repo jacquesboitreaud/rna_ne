@@ -89,7 +89,7 @@ if __name__ == "__main__":
             problem_nts = []
             
             node_attrs['angles']={} # dict to store angle values for each node
-            node_attrs['base_normal_vec']={} # angles of base normal vectors 
+            node_attrs['base_norm_vec']={} # angles of base normal vectors 
             
             node_attrs['identity']={} # dict to store nucleotide identity for each node 
         
