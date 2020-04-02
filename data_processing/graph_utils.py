@@ -9,8 +9,14 @@ Utils functions for RNA graph processing and context selection
 
 import networkx as nx
 import itertools
-    
-    
+
+def remove_self_edges(G):
+    to_drop=[]
+    for e in G.edges():
+        if(e[0]==e[1]):
+            to_drop.append(e)
+    G.remove_edges_from(to_drop)
+
     
 def nodes_within_radius(G, u, inner, outer) :
     """ 
