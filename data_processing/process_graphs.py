@@ -79,7 +79,7 @@ if __name__ == "__main__":
         
         if(cpt<args.cutoff):
             
-            if (pdb_id  not in high_res_struc):
+            if (pdb_id[:4]  not in high_res_struc):
                 #print('ignoring graph')
                 continue
             cpt+=1
