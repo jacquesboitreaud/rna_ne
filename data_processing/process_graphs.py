@@ -42,10 +42,10 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     
-    parser.add_argument('-d', "--debug", help="debug", 
-                        type=bool, default=True)
-    
     parser.add_argument('-hr', "--high_res", help="Use only high resolution PDB structures (406 samples).", 
+                        type=bool, default=False)
+    
+    parser.add_argument('-m', "--motifs_only", help=" Parse only graphs with motifs ", 
                         type=bool, default=True)
     
      # =======
@@ -55,10 +55,16 @@ if __name__ == "__main__":
     # Hyperparams 
     gr_dir = args.graphs_dir
     annot_dir = args.write_dir
-    high_res_struc = pickle.load(open('data_exploration/high_res_pdb.pickle','rb'))
+    
     if(args.high_res):
+        high_res_struc = pickle.load(open('data_exploration/high_res_pdb.pickle','rb'))
         print(f'>>> Parsing {len(high_res_struc)} high resolution structures')
         annot_dir = annot_dir + '_HR'
+        
+    if args.motifs_only:
+        with_motifs = pickle.load(open('data_exploration/3dmotifs_dict.pickle','rb'))
+        print(f'>>> Parsing {len(with_motifs)} graphs with motifs')
+        annot_dir = annot_dir + '_M'
     
     nucleotides_id = {'A':0,
                       'U':1,
@@ -79,9 +85,12 @@ if __name__ == "__main__":
         
         if(cpt<args.cutoff):
             
-            if (pdb_id[:4]  not in high_res_struc):
+            if ( args.high_res and (pdb_id[:4]  not in high_res_struc)):
                 #print('ignoring graph')
                 continue
+            if( args.motifs_only and (pdb_id[:4] not in with_motifs.keys())):
+                continue 
+            
             cpt+=1
             print(f'Reading {pdb_id}')
             # Dict for new node attributes 
