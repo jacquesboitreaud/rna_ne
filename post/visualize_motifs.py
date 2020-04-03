@@ -7,7 +7,7 @@ Created on Sat Mar  7 16:50:14 2020
 Load graphs with embeddings,
 visualize node embeddings for occurences of 3D motifs : 
     
-    The goal is to see if we can see isomorphic nodes in motif occurences by jut looking at their embeddings 
+The goal is to see if we can see isomorphic nodes in motif occurences by just looking at their embeddings 
     
 """
 
