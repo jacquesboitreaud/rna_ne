@@ -64,7 +64,7 @@ if __name__ == "__main__":
     if args.motifs_only:
         with_motifs = pickle.load(open('data_exploration/3dmotifs_dict.pickle','rb'))
         print(f'>>> Parsing {len(with_motifs)} graphs with motifs')
-        annot_dir = annot_dir + '_M'
+        annot_dir = "../data/motifs_graphs"
     
     nucleotides_id = {'A':0,
                       'U':1,
