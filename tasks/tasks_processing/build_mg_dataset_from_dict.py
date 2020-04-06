@@ -36,7 +36,7 @@ if __name__ == "__main__":
                         type=int, default=12)
     
     parser.add_argument('-d', "--binding_sites_dict", help="Path to binding sites dictionary", 
-                        type=str, default=os.path.join(script_dir,"../data/pdb_mg_res.p"))
+                        type=str, default=os.path.join(script_dir,"../data/pdb_mg_res_12A.p"))
     
     # =======
 

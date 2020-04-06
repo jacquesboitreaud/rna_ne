@@ -39,11 +39,9 @@ def collate_block(samples):
     # The input `samples` is a list of pairs
     #  (graph, context graph, node_idx, pair_label).
     graphs, ctx_graphs, u_idx, labels = map(list, zip(*samples))
+
+    batched_graph = dgl.batch(graphs)
     
-    try:
-        batched_graph = dgl.batch(graphs)
-    except: 
-        print(graphs)
     ctx_batched_graph = dgl.batch(ctx_graphs)
     labels = torch.tensor(labels, dtype = torch.float)
     

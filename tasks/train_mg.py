@@ -69,6 +69,8 @@ if __name__ == "__main__":
     # config
     feats_dim, h_size, out_size=6, 16, 1 # dims 
     
+    weights = torch.tensor([1,10])
+    
     #Loaders
     if(args.fr3d):
         print('********** Baseline model training, using FR3D graphs and edgetypes ******')
@@ -90,13 +92,13 @@ if __name__ == "__main__":
     train_loader, test_loader, _ = loaders.get_data()
     
     #Model & hparams
-    #device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    device = 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     parallel=False
     
     # Simple RGCN instance for node classification 
     model = RGCN(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
                   num_rels=N_edge_types, num_layers = args.layers, num_bases=-1, pool=False).to(device).float()
+    weights = weights.to(device)
 
     if(args.load_model):
         model.load_state_dict(torch.load(args.load_path))
@@ -132,7 +134,7 @@ if __name__ == "__main__":
             h = graph.ndata['h'].view(-1,1)
             labels = graph.ndata['Mg_binding'].float().view(-1,1)
             #Compute loss
-            t_loss = classifLoss(h, labels, show=False) #show=bool(total_steps%args.log_iter==0))
+            t_loss = classifLoss(h, labels, weights = weights, show=False) #show=bool(total_steps%args.log_iter==0))
             optimizer.zero_grad()
             t_loss.backward()
             
@@ -186,7 +188,7 @@ if __name__ == "__main__":
                 labels = graph.ndata['Mg_binding'].float().view(-1,1)
             
                 #Compute loss
-                t_loss = classifLoss(h, labels, show = False)
+                t_loss = classifLoss(h, labels, weights = weights, show = False)
                 test_ep_loss += t_loss.item()
                 
                 # Epoch accuracy 

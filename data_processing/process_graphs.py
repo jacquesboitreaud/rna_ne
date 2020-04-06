@@ -37,7 +37,7 @@ if __name__ == "__main__":
                         type=str, default="C:/Users/jacqu/Documents/MegaSync Downloads/RNA_graphs")
     
     parser.add_argument('-c', "--cutoff", help="Max number of train samples. Set to -1 for all graphs in dir", 
-                        type=int, default=1000)
+                        type=int, default=4500)
     
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
@@ -46,6 +46,9 @@ if __name__ == "__main__":
                         type=bool, default=False)
     
     parser.add_argument('-m', "--motifs_only", help=" Parse only graphs with motifs ", 
+                        type=bool, default=False)
+    
+    parser.add_argument('-mg', "--magnesium_only", help=" Parse only graphs with magnesium binding sites ", 
                         type=bool, default=True)
     
      # =======
@@ -58,13 +61,24 @@ if __name__ == "__main__":
     
     if(args.high_res):
         high_res_struc = pickle.load(open('data_exploration/high_res_pdb.pickle','rb'))
-        print(f'>>> Parsing {len(high_res_struc)} high resolution structures')
+        selected = high_res_struc
+        select = True
+        print(f'>>> Parsing {len(selected)} high resolution structures')
         annot_dir = annot_dir + '_HR'
-        
+
     if args.motifs_only:
         with_motifs = pickle.load(open('data_exploration/3dmotifs_dict.pickle','rb'))
-        print(f'>>> Parsing {len(with_motifs)} graphs with motifs')
+        selected = with_motifs.keys()
+        select = True
+        print(f'>>> Parsing {len(selected)} graphs with motifs')
         annot_dir = "../data/motifs_graphs"
+        
+    if args.magnesium_only:
+        mg_dict = pickle.load(open('../tasks/tasks_processing/mg_binding_dict.pickle','rb'))
+        selected = mg_dict.keys()
+        select = True
+        print(f'>>> Parsing {len(selected)} graphs with magnesium binding sites')
+        annot_dir = "../data/chunks_mg"
     
     nucleotides_id = {'A':0,
                       'U':1,
@@ -77,7 +91,7 @@ if __name__ == "__main__":
     cpt, bads =0,0
     nucleotides_counter = 0 
     # Load list of graphs to ignore
-    bad_graphs = set(pickle.load(open('bad_graphs.pickle','rb')))
+    #bad_graphs = set(pickle.load(open('bad_graphs.pickle','rb')))
     
     parse_dict = {}
         
@@ -85,11 +99,9 @@ if __name__ == "__main__":
         
         if(cpt<args.cutoff):
             
-            if ( args.high_res and (pdb_id[:4]  not in high_res_struc)):
+            if ( select and (pdb_id[:4]  not in selected)):
                 #print('ignoring graph')
                 continue
-            if( args.motifs_only and (pdb_id[:4] not in with_motifs.keys())):
-                continue 
             
             cpt+=1
             print(f'Reading {pdb_id}')
@@ -161,20 +173,20 @@ if __name__ == "__main__":
             # check number of nodes AND all nodes have at least one neighbor:
             
             N1 = G.number_of_nodes()
-            if(N1<4): # Not enough nodes, do not process and do not save 
-                print('less than 4 nodes. passing')
+            if(N1<8): # Not enough nodes, do not process and do not save 
+                print('less than 8 nodes. passing')
                 bads+=1
                 continue # empty graph, do not process and do not save 
 
-            nbr_neigh = [len(G[n]) for n in G.nodes()]
-            m = min(nbr_neigh)
-            if(m==0): # Do not save this graph : one node is lonely . 
-                print('Lonely node(s). passing')
+
+            lonely_nodes = [n for n in G.nodes() if len(G[n])==0]
+            G.remove_nodes_from(lonely_nodes)
+            N1 = G.number_of_nodes()
+            if(N1<8): # Do not save this graph 
+                print('less than 8 nodes. passing')
                 bads+=1
                 continue
             
-
-                
             nucleotides_counter += N1
             
             # Add node feature to all nodes 

@@ -6,6 +6,8 @@ Created on Sat Oct 26 18:06:44 2019
 
 Dataset + loader class for RNA graphs pretraining using context prediction (https://arxiv.org/abs/1905.12265)
 
+
+Faster version with no negative samples drawn explicitly : taken from other samples in the batch 
 """
 
 import os 
@@ -38,15 +40,16 @@ def collate_block(samples):
     # Collates samples into a batch
     # The input `samples` is a list of pairs
     #  (graph, context graph, node_idx, pair_label).
-    graphs, ctx_graphs, u_idx= map(list, zip(*samples))
+    graphs, ctx_graphs, ctx_prime, u_idx= map(list, zip(*samples))
     
-    try:
-        batched_graph = dgl.batch(graphs)
-    except: 
-        print(graphs)
+    batched_graph = dgl.batch(graphs)
     ctx_batched_graph = dgl.batch(ctx_graphs)
     
-    return batched_graph, ctx_batched_graph, u_idx
+    # shuffle 
+    ctx_shuffled = [ctx_prime[-1]]
+    ctx_shuffled+= ctx_prime[:-1]
+    
+    return batched_graph, ctx_batched_graph, ctx_shuffled, u_idx
 
 
 class pretrainDataset(Dataset):
@@ -198,8 +201,10 @@ class pretrainDataset(Dataset):
         floatid = ctx_g_dgl.ndata['identity'].float()
         ctx_g_dgl.ndata['h'] = torch.cat([ctx_g_dgl.ndata['angles'],floatid], dim=1)
         
+        ctx_g_dgl_prime = dgl.DGLGraph(ctx_g_dgl)
         
-        return g_dgl, ctx_g_dgl, u_idx
+        
+        return g_dgl, ctx_g_dgl, ctx_g_dgl_prime, u_idx
     
     def _get_edge_data(self):
         """

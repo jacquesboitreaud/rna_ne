@@ -41,10 +41,14 @@ if __name__ == "__main__":
     total_res = 0
     chem_modif =0
     
+    d = {}
+    
     # Parse graphs     
     for pickle_id in os.listdir(args.graphs_dir):
         pdbid = pickle_id[:-3]
         cpt+=1
+        
+        d[pdbid] = set()
         
         # Load graph  
         g = pickle.load(open(os.path.join(args.graphs_dir,pickle_id), 'rb'))
@@ -64,6 +68,9 @@ if __name__ == "__main__":
             if(data['mg']):
                 counter_found+=1
                 total_mg+=1
+                identifier = f'{chain}:{pos}'
+                d[pdbid].add(identifier)
+                
                 if(data['chemically_modified']):
                     chem_modif +=1 
                 
@@ -72,6 +79,17 @@ if __name__ == "__main__":
         
     print(f'Job finished, parsed {cpt} PDBs, {total_mg} binding residues over {total_res}')
     print(chem_modif, ' chemically modified binding residues')
+    
+    bads=[]
+    for k in d.keys():
+        if(len(d[k])==0):
+            bads.append(k)
+    for k in bads:
+        del(d[k])
+    print(f'{len(d)} graphs with MG binding nucleotides')
+    
+    with open('mg_binding_dict.pickle','wb') as f:
+        pickle.dump(d,f)
             
             
             

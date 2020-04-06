@@ -94,13 +94,13 @@ def draw_rec( prod, label, title = ''):
         
         return fig
         
-def classifLoss(h, labels, show = False):
+def classifLoss(h, labels, weights, show = False):
     # Node classification loss 
 
     if(show):
         draw_rec(torch.sigmoid(h), labels)
         plt.show()
-    loss = F.binary_cross_entropy_with_logits(h, labels, reduction = 'sum') 
+    loss = F.binary_cross_entropy_with_logits(h, labels, reduction = 'sum', pos_weight = weights) 
      
     return loss
 

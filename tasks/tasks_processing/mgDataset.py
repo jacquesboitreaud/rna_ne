@@ -192,7 +192,7 @@ class Loader():
         indices = list(range(n))
         # np.random.shuffle(indices)
         np.random.seed(0)
-        split_train, split_valid = 0.5, 1
+        split_train, split_valid = 0.9, 1
         train_index, valid_index = int(split_train * n), int(split_valid * n)
 
 
