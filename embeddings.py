@@ -39,12 +39,12 @@ if (__name__ == "__main__"):
     
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('-i', '--train_dir', help="path to training dataframe", type=str, default='data/motifs_chunks')
+    parser.add_argument('-i', '--train_dir', help="path to training dataframe", type=str, default='tasks/data/mg_annotated_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=300)
-    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_iter_18500.pth')
+                        type=int, default=-1)
+    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_iter_36400.pth')
     # Where to save graphs with embeddings
-    parser.add_argument('-o', '--savedir', type=str, default = 'data/with_embeddings')
+    parser.add_argument('-o', '--savedir', type=str, default = 'tasks/data/mg_embedded_graphs')
     parser.add_argument('--batch_size', type=int, default = 16)
     
     ###########
@@ -60,7 +60,7 @@ if (__name__ == "__main__"):
     #Loaders
     loaders = Loader(path=args.train_dir ,
                      attributes = ['angles', 'identity'],
-                     N_graphs=args.cutoff, 
+                     N_graphs=None, 
                      emb_size= feats_dim, 
                      true_edges=True, # Add the true edge types as an edge feature for validation & clustering
                      num_workers=0, 
@@ -89,11 +89,13 @@ if (__name__ == "__main__"):
     
     # Pass graphs to model and get node embeddings 
     model.eval()
-    cpt=0
+    counter =0
     with torch.no_grad():
         for batch_idx, (graph, pdb_ids) in enumerate(loader):
-
+            print('batch n° ',batch_idx , '/', len(loader))
+            
             graph=send_graph_to_device(graph,device)
+            
 
             # Forward pass 
             model.GNN(graph) 
@@ -102,13 +104,29 @@ if (__name__ == "__main__"):
             graphs = dgl.unbatch(graph)
             
             for i,g in enumerate(graphs):
-                nx_g= g.to_networkx(node_attrs=['h'], edge_attrs=['true_ET'])
-                nx_g=nx.to_undirected(nx_g)
+                gid = pdb_ids[i]
                 
-                with open(os.path.join(args.savedir,pdb_ids[i]+'.pickle'),'wb') as f:
+                # Load networkx original graph 
+                with open(f'{args.train_dir}/{gid}.pickle', 'rb') as f:
+                    fr3d_g = pickle.load(f)
+                    
+                node_map = {nid : old_id for nid,old_id in enumerate(sorted(fr3d_g.nodes()))}
+                # node map [ int label ] = label ('chain', 'pos')
+                
+                # A dict keyed by node ids (fr3d) with the embeddings 
+                embeddings_attr = {node_map[k]: g.ndata['h'][int(k)] for k in range(len(g.nodes()))}
+                # link nx_g node attr 'h' to true node labels (values in node_map )
+                
+                nx.set_node_attributes(fr3d_g, name='h', values= embeddings_attr)
+                
+                # Save back our graph with embeddings 
+                with open(os.path.join(args.savedir,gid+'.pickle'),'wb') as f:
                     pickle.dump(nx_g, f)
-                cpt +=1 
-    print(f'Saved {cpt} graphs with embeddings in ~/{args.savedir}')
+                counter +=1
+            print(counter, ' graphs embedded')
+             
+    
+    print(f'Saved {counter} graphs with embeddings in ~/{args.savedir}')
             
             
 

@@ -24,23 +24,28 @@ import torch.nn.utils.clip_grad as clip
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
+from sklearn.metrics import f1_score, precision_score, recall_score
+
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
     sys.path.append(script_dir)
     sys.path.append(os.path.join(script_dir,'tasks_processing'))
     sys.path.append(os.path.join(script_dir,'..'))
     
-    from model_mg import RGCN, classifLoss, draw_rec
+    from model_mg import RGCN
     from tasks_processing.mgDataset import mgDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
     
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='../../../MEGAsync Downloads/mg_graphs')
+    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_annotated_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=40)
+                        type=int, default=300)
     parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
+                        default=True)
+    
+    parser.add_argument("-e","--embeddings", action='store_true', help="Use pretrained embeddings.",
                         default=True)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
@@ -50,9 +55,10 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=8)
     
     parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
-    
-    parser.add_argument('--debug', action='store_true', default=False)
+
     parser.add_argument('--layers', type=int, default=2) # nbr of layers in RGCN 
+    parser.add_argument('--edge_map', type=str, help='precomputed edge map for one-hot encoding. Set to None to rebuild. ', 
+                        default = 'mg_edge_map.pickle')
 
     parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
@@ -61,15 +67,21 @@ if __name__ == "__main__":
     
     parser.add_argument('--log_iter', type=int, default=5) # print loss metrics every _ step
     parser.add_argument('--save_iter', type=int, default=1000) # save model weights every _ step
+    
+    
 
      # =======
 
     args=parser.parse_args()
 
     # config
-    feats_dim, h_size, out_size=6, 16, 1 # dims 
+    if(args.embeddings):
+        feats_dim, h_size, out_size=12, 16, 16 # dims 
+    else:
+        feats_dim, h_size, out_size=32, 16, 16 # dims 
+    bases = 10 
     
-    weights = torch.tensor([1,10])
+    weights = torch.tensor([1.,100.])
     
     #Loaders
     if(args.fr3d):
@@ -78,11 +90,12 @@ if __name__ == "__main__":
         print('********** Training model with learned nucleotide embeddings ***********')
     loaders = Loader(path=args.train_dir ,
                      true_edges=args.fr3d, # Whether we use true FR3D graphs or embeddings graphs 
-                     attributes = ['A','U','G','C','chi','gly_base'],
+                     attributes = ['angles', 'identity'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
                      num_workers=args.num_processes, 
-                     batch_size=args.batch_size)
+                     batch_size=args.batch_size, 
+                     prebuilt_edge_map = args.edge_map )
     
     # Tensorboard logging 
     # Writer will output to ./runs/ directory by default
@@ -97,8 +110,12 @@ if __name__ == "__main__":
     
     # Simple RGCN instance for node classification 
     model = RGCN(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, num_layers = args.layers, num_bases=-1, pool=False).to(device).float()
+                  num_rels=N_edge_types, num_layers = args.layers, num_bases=bases, pool=False).to(device).float()
     weights = weights.to(device)
+    
+    m=nn.LogSoftmax(dim=1)
+    criterion = nn.NLLLoss(weight = weights, reduction = 'sum')
+    
 
     if(args.load_model):
         model.load_state_dict(torch.load(args.load_path))
@@ -117,9 +134,10 @@ if __name__ == "__main__":
     total_steps=0 # nbr of optim steps 
 
     for epoch in range(1, args.epochs+1):
+        print('*********************************')
         print(f'Starting epoch {epoch}')
         train_ep_loss, test_ep_loss = 0,0
-        accuracy_num, accuracy_denom, pos_pred = 0,0, 0
+        pos_pred = 0
         
         for batch_idx, (graph, pdbids) in enumerate(train_loader):
 
@@ -128,30 +146,35 @@ if __name__ == "__main__":
             graph=send_graph_to_device(graph,device)
 
             # Forward pass
-            model(graph)
+            h = model(graph)
+            #h = graph.ndata['h'].view(-1,out_size)
             
-            # Get node embeddings 
-            h = graph.ndata['h'].view(-1,1)
-            labels = graph.ndata['Mg_binding'].float().view(-1,1)
+            # Get mg labels 
+            labels = graph.ndata['Mg_binding'].long()
+            
             #Compute loss
-            t_loss = classifLoss(h, labels, weights = weights, show=False) #show=bool(total_steps%args.log_iter==0))
+            t_loss = criterion( m(h), labels)
             optimizer.zero_grad()
             t_loss.backward()
             
             # Epoch accuracy 
-            pred = torch.round(torch.sigmoid(h))
-            pos_pred += torch.sum(pred)
-            correct = (pred==labels).float().sum()
-            accuracy_num += correct 
-            accuracy_denom += pred.shape[0]
+            _, pred = torch.max(m(h), dim=1)
+            pos_pred += torch.sum(pred).float()
+            
+            # Confusion matrix : 
+            true, pred = labels.cpu().detach(), pred.cpu().detach()
+            p = precision_score(true, pred)   
+            r = recall_score(true, pred) 
+            f1 = 2*(p*r)/(p+r)
+            
             
             #Print & log
             train_ep_loss += t_loss.item()
             if total_steps % args.log_iter == 0:
-                figure = draw_rec(h.view(-1,1), labels.view(-1,1))
-                writer.add_figure('heatmap', figure, global_step=total_steps, close=True)
+
                 writer.add_scalar('batchLoss/train', t_loss.item()  , total_steps)
                 print('epoch {}, opt. step n°{}, loss {:.2f}'.format(epoch, total_steps, t_loss.item()))
+                print(f'precision: {p}, recall: {r}, f1-score: {f1}')
             
             del(t_loss)
             clip.clip_grad_norm_(model.parameters(),args.clip_norm)
@@ -166,43 +189,42 @@ if __name__ == "__main__":
             if total_steps % args.save_iter == 0:
                 torch.save( model.state_dict(), f"{args.save_path[:-4]}_iter_{total_steps}.pth")
         
-        accuracy = accuracy_num/accuracy_denom
-        frac_pos_pred = pos_pred/accuracy_denom
-        print(f'epoch {epoch}, train accuracy : {accuracy}, frac positive pred : {frac_pos_pred}')
+        print(f'epoch {epoch}, loss : {train_ep_loss}, N positive pred : {pos_pred}')
         # Epoch logging 
         writer.add_scalar('epochLoss/train', train_ep_loss, epoch)
-        writer.add_scalar('epochAcc/train', accuracy, epoch)
         
         # Validation pass
         model.eval()
-        accuracy_num, accuracy_denom, pos_pred = 0,0, 0
+        pos_pred = 0
         with torch.no_grad():
             for batch_idx, (graph, pdbids ) in enumerate(test_loader):
 
                 graph=send_graph_to_device(graph,device)
 
                 # Forward pass 
-                model(graph) 
+                h= model(graph) 
+                #h=graph.ndata['h'].view(-1,out_size)
                 
-                h=graph.ndata['h'].view(-1,1)
-                labels = graph.ndata['Mg_binding'].float().view(-1,1)
+                labels = graph.ndata['Mg_binding'].long()
             
                 #Compute loss
-                t_loss = classifLoss(h, labels, weights = weights, show = False)
+                t_loss = criterion( m(h), labels)
                 test_ep_loss += t_loss.item()
                 
                 # Epoch accuracy 
-                pred = torch.round(torch.sigmoid(h))
-                pos_pred += torch.sum(pred)
-                correct = (pred==labels).float().sum()
-                accuracy_num += correct 
-                accuracy_denom += pred.shape[0]
+                _, pred = torch.max(m(h), dim=1)
+                pos_pred += torch.sum(pred).float()
                 
-            accuracy = accuracy_num/accuracy_denom
-            frac_pos_pred = pos_pred /accuracy_denom
-            print(f'epoch {epoch}, test accuracy : {accuracy}, frac positive pred : {frac_pos_pred}')
+                # Confusion matrix : 
+                true, pred = labels.cpu().detach(), pred.cpu().detach()
+                p = precision_score(true, pred)   
+                r = recall_score(true, pred)   
+                f1 = 2*(p*r)/(p+r)
+            
+            print('*************** Validation pass *********************')
+            print(f'epoch {epoch}, Validation loss : {test_ep_loss}, N positive pred : {pos_pred}')
+            print(f'precision: {p}, recall: {r}, f1-score: {f1}')
                     
         # Epoch logging
         writer.add_scalar('epochLoss/test', test_ep_loss, epoch)
-        writer.add_scalar('epochAcc/test', accuracy, epoch)
         

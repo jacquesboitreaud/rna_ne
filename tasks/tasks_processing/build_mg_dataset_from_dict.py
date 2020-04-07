@@ -29,14 +29,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-i', '--graphs_dir', help="path to directory containing 'rna_classes' nx graphs ", 
-                        type=str, default=os.path.join(repo_root,"data/chunks"))
+                        type=str, default=os.path.join(repo_root,"data/chunks_mg"))
+    
     parser.add_argument('-o', '--out_dir', help="path to directory to save mg_graphs ", 
-                        type=str, default=os.path.join(script_dir,"../data/mg_graphs"))
-    parser.add_argument('-c', "--cutoff", help="Distance cutoff for binding sites, in Angstrom", 
-                        type=int, default=12)
+                        type=str, default=os.path.join(script_dir,"../data/mg_annotated_graphs"))
     
     parser.add_argument('-d', "--binding_sites_dict", help="Path to binding sites dictionary", 
-                        type=str, default=os.path.join(script_dir,"../data/pdb_mg_res_12A.p"))
+                        type=str, default=os.path.join(script_dir,"mg_binding_dict.pickle"))
     
     # =======
 
@@ -58,7 +57,7 @@ if __name__ == "__main__":
         #print(f'Parsing {pdbid}')
         
         try:
-            g_sites = sites[pdbid+'.cif']
+            g_sites = sites[pdbid]
             n_sites = len(g_sites)
         except(KeyError):
             print(f'{pdbid}: not in binding sites dict')
@@ -69,21 +68,16 @@ if __name__ == "__main__":
         counter_found = 0 # nbr nodes found in dict 
         
         # Collect Mg binding nucleotides
-        binding_nts = set()
-        for s in g_sites: # for each binding site found in g 
-            s_c = [d for d in s[1] if d['cutoff']==args.cutoff][0] # select dict with the right cutoff value
-            binding_nts.update(set(s_c['rna_res']))
-        ntot = len(binding_nts)
+        ntot = len(g_sites)
             
         for n, data in g.nodes(data=True):
             chain, _ = n 
-            base = data['nucleotide'].nt
             pos = data['nucleotide'].pdb_pos
             
-            res_id=f'{chain}:{base}:{pos}'
+            res_id=f'{chain}:{pos}'
             
             is_binding = 0
-            if(res_id in binding_nts): 
+            if(res_id in g_sites): 
                 # Residue is in binding site at cutoff distance 
                 is_binding = 1 
                 counter_found +=1

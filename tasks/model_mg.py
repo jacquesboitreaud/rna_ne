@@ -59,8 +59,10 @@ class RGCN(nn.Module):
                 self.layers.append(h2h)
         # hidden to output
         if(self.num_layers>=2):
-            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels) #, activation=nn.ReLU())
+            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels, activation=nn.ReLU())
             self.layers.append(h2o)
+            
+        self.linear=nn.Linear(self.out_dim, 2) # for softmax 
 
 
     def forward(self, g):
@@ -71,11 +73,7 @@ class RGCN(nn.Module):
         for layer in self.layers:
              g.ndata['h']=layer(g,g.ndata['h'],g.edata['one_hot'])
             
-        if(self.pool):
-            out = self.pooling_layer(g, g.ndata['h'])
-            return out 
-        else:
-            return g.ndata['h']
+        return self.linear(g.ndata['h'])
 
         
 def draw_rec( prod, label, title = ''):
@@ -93,14 +91,4 @@ def draw_rec( prod, label, title = ''):
         plt.tight_layout()
         
         return fig
-        
-def classifLoss(h, labels, weights, show = False):
-    # Node classification loss 
-
-    if(show):
-        draw_rec(torch.sigmoid(h), labels)
-        plt.show()
-    loss = F.binary_cross_entropy_with_logits(h, labels, reduction = 'sum', pos_weight = weights) 
-     
-    return loss
 

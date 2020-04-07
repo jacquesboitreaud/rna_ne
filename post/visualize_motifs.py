@@ -62,14 +62,16 @@ if __name__ == '__main__':
     for gid in graphs:
         
         embeddings = torch.zeros(40,emb_size)
+        try:
+            with open(os.path.join(data_dir,gid), 'rb') as f:
+                g = pickle.load(f)
+                
+            with open(os.path.join('../data/motifs_chunks',gid),'rb') as f : 
+                _ = pickle.load(f)
+                motif = pickle.load(f)
+        except:
+            continue
         
-        with open(os.path.join(data_dir,gid), 'rb') as f:
-            g = pickle.load(f)
-            
-        with open(os.path.join('../data/motifs_chunks',gid),'rb') as f : 
-            _ = pickle.load(f)
-            motif = pickle.load(f)
-            
         index = 0
         for (n, data) in g.nodes(data=True):
             

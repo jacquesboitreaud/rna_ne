@@ -5,7 +5,7 @@ Created on Sun Nov  3 17:11:42 2019
 @author: jacqu
 
 Prepare graphs for downstream task:
-Parses prebuilt MG graphs, counts number of MG binding residues overall 
+counts number of MG binding residues overall and creates a dict of mg binding residues per graph 
         
 """
 

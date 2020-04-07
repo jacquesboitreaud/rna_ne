@@ -55,7 +55,8 @@ class mgDataset(Dataset):
                  N_graphs,
                  emb_size,
                  attributes,
-                 add_true_edges):
+                 true_edges,
+                 prebuilt_edge_map=None):
         
         self.path = rna_graphs_path
         
@@ -63,8 +64,6 @@ class mgDataset(Dataset):
             self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number
         else:
             self.all_graphs = os.listdir(self.path)
-            np.random.seed(10)
-            np.random.shuffle(self.all_graphs)
             
         self.n=len(self.all_graphs)
         
@@ -72,20 +71,32 @@ class mgDataset(Dataset):
         self.emb_size = emb_size
         self.attributes = attributes
         
-        # Wether to keep true edge labels in graph 
+        # Wether to use true edge labels or simplify 
         # Build edge map
-        self.true_edges=add_true_edges
+        self.true_edges= true_edges
+        self.prebuilt_edge_map = prebuilt_edge_map
+        
         if(self.true_edges):
             print('Parsing true FR3D edge types in input graphs...')
-            self.true_edge_map, self.true_edge_freqs = self._get_edge_data()
-            self.num_true_edge_types = len(self.true_edge_map)
-            print(f"found {self.num_true_edge_types} FR3D edge types, frequencies: {self.true_edge_freqs}")
-        
-        # the simplified labels to feed the GNN with (0,1)
-        self.num_edge_types=2
-        # Edge map with Backbone (0) and pairs (1)
-        self.edge_map={'B35':0,
-                  'B53':0}
+            
+            if(self.prebuilt_edge_map==None):
+                self.true_edge_map, self.true_edge_freqs = self._get_edge_data()
+                
+                with open('mg_edge_map.pickle', 'wb') as f:
+                    pickle.dump(self.true_edge_map,f)
+                    pickle.dump(self.true_edge_freqs, f)
+                    
+            else:
+                self.true_edge_map, self.true_edge_freqs = self._load_edge_map(self.prebuilt_edge_map)
+            self.num_edge_types = len(self.true_edge_map)
+            print(f"found {self.num_edge_types} FR3D edge types, frequencies: {self.true_edge_freqs}")
+                
+        else:
+            # the simplified labels to feed the GNN with (0,1)
+            self.num_edge_types=2
+            # Edge map with Backbone (0) and pairs (1)
+            self.edge_map={'B35':0,
+                      'B53':0}
         
         
     def _get_simple_etype(self,label):
@@ -115,22 +126,23 @@ class mgDataset(Dataset):
         if(self.true_edges): # add true edge types 
             true_ET = {edge: torch.tensor(self.true_edge_map[label]) for edge, label in
                    (nx.get_edge_attributes(G, 'label')).items()}
-            nx.set_edge_attributes(G, name='true_ET', values=true_ET)
-        
+            nx.set_edge_attributes(G, name='one_hot', values=true_ET)
+            
+        else:
+            one_hot = {edge: self._get_simple_etype(label) for edge, label in
+                       (nx.get_edge_attributes(G, 'label')).items()}
+            nx.set_edge_attributes(G, name='one_hot', values=one_hot)
         
         # Create dgl graph
         g_dgl = dgl.DGLGraph()
 
         # Add true edge types to features (for visualisation & clustering)
-        if(self.true_edges):
-            g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot','true_ET'], 
-                                node_attrs = self.attributes+['Mg_binding'])
-        else:
-            g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], 
+        g_dgl.from_networkx(nx_graph=G, edge_attrs=['one_hot'], 
                                 node_attrs = self.attributes+['Mg_binding'])
         
         # Init node embeddings with nodes features
-        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata[a].view(-1,1) for a in self.attributes], dim = 1)
+        floatid = g_dgl.ndata['identity'].float()
+        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['angles'], floatid], dim = 1)
         
         # Return pair graph, pdb_id
         return g_dgl, pdb
@@ -141,7 +153,7 @@ class mgDataset(Dataset):
         """
         edge_counts = Counter()
         print("Collecting edge data...")
-        graphlist = os.listdir(self.path)
+        graphlist = self.all_graphs
         for g in tqdm(graphlist):
             graph = pickle.load(open(os.path.join(self.path, g), 'rb'))
             edges = {e_dict['label'] for _,_,e_dict in graph.edges(data=True)}
@@ -151,6 +163,14 @@ class mgDataset(Dataset):
         edge_map = {label:i for i,label in enumerate(sorted(edge_counts))}
         
         IDF = {k: np.log(len(graphlist)/ edge_counts[k] + 1) for k in edge_counts}
+        
+        return edge_map, IDF
+    
+    def _load_edge_map(self, path):
+        # Loads edgemap and edge freqs from pickle file
+        with open(path, 'rb') as f:
+            edge_map = pickle.load(f)
+            IDF = pickle.load(f)
         return edge_map, IDF
         
     
@@ -163,6 +183,7 @@ class Loader():
                  batch_size=32,
                  num_workers=0,
                  true_edges = True,
+                 prebuilt_edge_map = None, 
                  EVAL=False):
         
         """
@@ -180,7 +201,8 @@ class Loader():
                                   N_graphs= N_graphs,
                                   emb_size=emb_size,
                                   attributes = attributes,
-                                  add_true_edges = true_edges)
+                                  true_edges = true_edges, 
+                                  prebuilt_edge_map = prebuilt_edge_map)
         self.num_edge_types = self.dataset.num_edge_types
         self.EVAL=EVAL
         
@@ -198,34 +220,20 @@ class Loader():
 
         train_indices = indices[:train_index]
         valid_indices = indices[train_index:valid_index]
-        test_indices = indices[valid_index:]
         
-        if(self.EVAL):
-            train_set = Subset(self.dataset, train_indices[:1000]) # select just a small subset
-        else:
-            train_set = Subset(self.dataset, train_indices)
+        train_set = Subset(self.dataset, train_indices)
             
         valid_set = Subset(self.dataset, valid_indices)
-        #test_set = Subset(self.dataset, test_indices)
+
         print(f"Train set contains {len(train_set)} samples")
 
-        if(not self.EVAL): # Pretraining phase 
-            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                      num_workers=self.num_workers, collate_fn=collate_block)
-    
-            valid_loader = DataLoader(dataset=valid_set, shuffle=True, batch_size=self.batch_size,
-                                       num_workers=self.num_workers, collate_fn=collate_block)
-            
-            return train_loader, valid_loader, 0
-        
-        else: # Eval or visualization phase 
-            train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
-                                      num_workers=self.num_workers, collate_fn=collate_block)
-            
-            test_loader = DataLoader(dataset=test_set, shuffle=False, batch_size=self.batch_size,
-                                 num_workers=self.num_workers, collate_fn=collate_block)
+        train_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
+                                  num_workers=self.num_workers, collate_fn=collate_block)
 
-            return train_loader,0, test_loader
+        valid_loader = DataLoader(dataset=valid_set, shuffle=True, batch_size=self.batch_size,
+                                   num_workers=self.num_workers, collate_fn=collate_block)
+            
+        return train_loader, valid_loader, 0
         
 if __name__=='__main__':
     pass

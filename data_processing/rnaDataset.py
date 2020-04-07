@@ -64,8 +64,7 @@ class rnaDataset(Dataset):
             self.all_graphs = os.listdir(self.path)[:N_graphs] # Cutoff number
         else:
             self.all_graphs = os.listdir(self.path)
-            np.random.seed(10)
-            np.random.shuffle(self.all_graphs)
+            print(len(self.all_graphs))
             
         self.n=len(self.all_graphs)
         
@@ -78,7 +77,15 @@ class rnaDataset(Dataset):
         self.true_edges=add_true_edges
         if(self.true_edges):
             print('Parsing true FR3D edge types in input graphs...')
-            self.true_edge_map, self.true_edge_freqs = self._get_edge_data()
+            with open('true_edge_map.pickle','rb') as f:
+                
+                try:
+                    self.true_edge_map = pickle.load(f)
+                    self.true_edge_freqs = pickle.load(f)
+                except:
+                    print('>>> Edge map and frequencies not found. Parsing the dataset...')
+                    self.true_edge_map, self.true_edge_freqs = self._get_edge_data()
+                
             self.num_true_edge_types = len(self.true_edge_map)
             print(f"found {self.num_true_edge_types} FR3D edge types, frequencies: {self.true_edge_freqs}")
         
@@ -138,7 +145,7 @@ class rnaDataset(Dataset):
         floatid = g_dgl.ndata['identity'].float()
         g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['angles'], floatid], dim = 1)
         
-        # Return pair graph, pdb_id
+        # Return pair graph, pdb_id + 'label' attribute to carry along
         return g_dgl, pdb
     
     def _get_edge_data(self):
@@ -209,7 +216,7 @@ class Loader():
         #test_set = Subset(self.dataset, test_indices)
         print(f"Loaded dataset contains {len(train_set)} samples")
 
-        dataset_loader = DataLoader(dataset=train_set, shuffle=True, batch_size=self.batch_size,
+        dataset_loader = DataLoader(dataset=train_set, shuffle=False, batch_size=self.batch_size,
                                       num_workers=self.num_workers, collate_fn=collate_block)
             
         return dataset_loader, 0, 0
