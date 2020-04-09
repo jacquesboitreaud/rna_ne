@@ -112,13 +112,14 @@ if __name__ == "__main__":
         b=num_bases 
         
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=b).to(device).float()
+                  num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=b).float()
     if torch.cuda.device_count() >1 :
         print('Parallel GPU training')
         model = nn.DataParallel(model)
 
     #Print model summary
     print(model)
+    model.to(device)
     map = ('cpu' if device == 'cpu' else None)
 
     # Optim
