@@ -113,7 +113,8 @@ if __name__ == "__main__":
         
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
                   num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=b).float()
-    if torch.cuda.device_count() >1 :
+    parallel = False
+    if parallel and torch.cuda.device_count() >1 :
         print('Parallel GPU training')
         model = nn.DataParallel(model)
 
@@ -138,8 +139,7 @@ if __name__ == "__main__":
         for batch_idx, (graph, ctx_graph, u_index, labels) in enumerate(train_loader):
 
             total_steps+=1 # count training steps
-            
-
+        
             graph=send_graph_to_device(graph,device)
             ctx_graph=send_graph_to_device(ctx_graph,device)
             labels = labels.to(device)
