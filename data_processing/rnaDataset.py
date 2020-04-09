@@ -78,7 +78,7 @@ class rnaDataset(Dataset):
         
         if(self.true_edges):
             print('Parsing true FR3D edge types in input graphs...')
-            with open('true_edge_map.pickle','rb') as f:
+            with open('fr3d_edge_map.pickle','rb') as f:
                 
                 try:
                     self.true_edge_map = pickle.load(f)

@@ -87,7 +87,14 @@ class pretrainDataset(Dataset):
         # Build edge map
         self.simplified_edges=simplified_edges
         if(not self.simplified_edges):
-            self.edge_map, self.edge_freqs = self._get_edge_data()
+            print('Parsing true FR3D edge types in input graphs...')
+            with open('fr3d_edge_map.pickle','rb') as f:
+                try:
+                    self.edge_map = pickle.load(f)
+                    self.edge_freqs = pickle.load(f)
+                except:
+                    print('>>> prebuilt edge map and frequencies not found. Parsing the dataset...')
+                    self.edge_map, self.edge_freqs = self._get_edge_data()
             self.num_edge_types = len(self.edge_map)
             print(f"found {self.num_edge_types} edge types, frequencies: {self.edge_freqs}")
         else:
