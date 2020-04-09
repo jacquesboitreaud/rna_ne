@@ -112,7 +112,7 @@ if __name__ == "__main__":
         b=num_bases 
         
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=b).float()
+                  num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=b, dropout = 0.2).float()
     parallel = False
     if parallel and torch.cuda.device_count() >1 :
         print('Parallel GPU training')

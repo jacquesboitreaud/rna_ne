@@ -28,17 +28,15 @@ import matplotlib.pyplot as plt
 class RGCN(nn.Module):
     # Computes embeddings for all nodes
     # No features
-    def __init__(self, features_dim, h_dim, out_dim , num_rels, num_bases=-1, num_layers=1, pool=False):
+    def __init__(self, features_dim, h_dim, out_dim , num_rels, num_bases=-1, num_layers=1, dropout = 0.2):
         super(RGCN, self).__init__()
         
         self.features_dim, self.h_dim, self.out_dim = features_dim, h_dim, out_dim
         self.num_layers = num_layers
         self.num_rels = num_rels
         self.num_bases = num_bases
-        self.pool=pool
         
-        if(self.pool):
-            self.pooling_layer = SumPooling()
+        self.d = dropout
         
         # create rgcn layers
         self.build_model()
@@ -47,22 +45,22 @@ class RGCN(nn.Module):
         self.layers = nn.ModuleList()
         # input to hidden
         if(self.num_layers==1):
-            i2h = RelGraphConv(self.features_dim, self.out_dim, self.num_rels, num_bases = self.num_bases)
+            i2h = RelGraphConv(self.features_dim, self.out_dim, self.num_rels, num_bases = self.num_bases, dropout = self.d)
         else:
             i2h = RelGraphConv(self.features_dim, self.h_dim, self.num_rels, num_bases = self.num_bases,
-                               activation=nn.ReLU())
+                               activation=nn.ReLU(), dropout = self.d)
         self.layers.append(i2h)
         
         # hidden to hidden
         if(self.num_layers>2):
             for _ in range(self.num_layers-2):
                 h2h = RelGraphConv(self.h_dim, self.h_dim, self.num_rels, num_bases = self.num_bases,
-                                   activation=nn.ReLU())
+                                   activation=nn.ReLU(), dropout = self.d)
                 self.layers.append(h2h)
                 
         # hidden to output
         if(self.num_layers>=2):
-            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels, num_bases = self.num_bases) 
+            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels, num_bases = self.num_bases, dropout = self.d) 
             self.layers.append(h2o)
 
     def forward(self, g):
@@ -70,16 +68,12 @@ class RGCN(nn.Module):
         for layer in self.layers:
              g.ndata['h']=layer(g,g.ndata['h'],g.edata['one_hot'])
             
-        if(self.pool):
-            out = self.pooling_layer(g, g.ndata['h'])
-            return out 
-        else:
-            return g.ndata['h']
+        return g.ndata['h']
         
 class Model(nn.Module):
     """ Model instance that contains a GNN and a context GNN """
     
-    def __init__(self, features_dim, h_dim, out_dim , num_rels, radii_params, num_bases=-1):
+    def __init__(self, features_dim, h_dim, out_dim , num_rels, radii_params, num_bases=-1, dropout = 0.2):
         super(Model, self).__init__()
         
         self.features_dim, self.h_dim, self.out_dim = features_dim, h_dim, out_dim
@@ -87,6 +81,7 @@ class Model(nn.Module):
         self.num_bases = num_bases
         
         self.K, self.r1, self.r2 = radii_params
+        self.d = dropout 
         
         self.cgnn_layers = int(self.r2-self.r1)
         assert(self.cgnn_layers==self.K) # Patch representations of radius 1 , context ring of width 1 
@@ -99,7 +94,7 @@ class Model(nn.Module):
     def build_model(self):
         
         self.GNN = RGCN(self.features_dim,self.h_dim, self.out_dim,self.num_rels,
-                        self.num_bases, num_layers=self.K, pool=False)
+                        self.num_bases, num_layers=self.K, dropout = self.d)
         
         self.linear=nn.Linear(self.out_dim, self.out_dim, bias=False)
         
