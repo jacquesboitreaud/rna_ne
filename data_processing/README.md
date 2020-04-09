@@ -4,5 +4,5 @@
 
 To preprocess graphs (compute intra-nucleotide angles and one hot nucleotide identity features), run 
 ```
-python preprocess_graphs.py -i [directory with graphs] -o [preprocessed_dir]
+python process_graphs.py -i [directory with graphs] -o [preprocessed_dir]
 ```

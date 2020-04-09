@@ -10,15 +10,15 @@ To train model on RNA graphs in ./directory:
 
 First preprocess graphs (compute angles and one-hot features from the rna_classes features) by 
 ```
-python data_processing/preprocess_graphs.py -i [directory] -o [preprocessed_dir]
+python data_processing/process_graphs.py -i [directory] -o [preprocessed_dir]
 ```
 
 Then learn embeddings using context prediction by running 
 ```
-python train.py --train_dir [preprocessed_dir] 
+python pretrain_context.py --train_dir [preprocessed_dir] 
 ```
 
-Default values for context prediction hyperparams are K=1, r1 = 1, r2=3.
+Default values for context prediction hyperparams are K=1, r1 = 1, r2=2.
 (K,r1,r2) can be changed by adding arguments 
 ```
 python train.py --train_dir [preprocessed_dir] --K ... --r1 ... --r2 ...
@@ -30,6 +30,8 @@ To compute embeddings for graphs in ./directory and save them to a new dir, run
 ```
 python embeddings.py -i [directory] -o [write_directory]
 ``` 
+
+An example of how to use a saved model to warm-start embeddings with the pretrained embeddings is given in tasks/train_mg.py
 
 ## Visualize learned embeddings for different basepair types 
 
