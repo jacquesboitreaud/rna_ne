@@ -47,25 +47,25 @@ class RGCN(nn.Module):
         self.layers = nn.ModuleList()
         # input to hidden
         if(self.num_layers==1):
-            i2h = RelGraphConv(self.features_dim, self.out_dim, self.num_rels) #, activation=nn.ReLU())
+            i2h = RelGraphConv(self.features_dim, self.out_dim, self.num_rels, num_bases = self.num_bases)
         else:
-            i2h = RelGraphConv(self.features_dim, self.h_dim, self.num_rels, activation=nn.ReLU())
+            i2h = RelGraphConv(self.features_dim, self.h_dim, self.num_rels, num_bases = self.num_bases,
+                               activation=nn.ReLU())
         self.layers.append(i2h)
         
         # hidden to hidden
         if(self.num_layers>2):
             for _ in range(self.num_layers-2):
-                h2h = RelGraphConv(self.h_dim, self.h_dim, self.num_rels, activation=nn.ReLU())
+                h2h = RelGraphConv(self.h_dim, self.h_dim, self.num_rels, num_bases = self.num_bases,
+                                   activation=nn.ReLU())
                 self.layers.append(h2h)
+                
         # hidden to output
         if(self.num_layers>=2):
-            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels) #, activation=nn.ReLU())
+            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels, num_bases = self.num_bases) 
             self.layers.append(h2o)
 
     def forward(self, g):
-        #print('edge data size ', g.edata['one_hot'].size())
-        #print('node data size ', g.ndata['h'].size())
-        #print('initial h: ', g.ndata['h'])
         
         for layer in self.layers:
              g.ndata['h']=layer(g,g.ndata['h'],g.edata['one_hot'])
@@ -91,7 +91,7 @@ class Model(nn.Module):
         self.cgnn_layers = int(self.r2-self.r1)
         assert(self.cgnn_layers==self.K) # Patch representations of radius 1 , context ring of width 1 
         print(' ************* Model initialisation *******************')
-        print(f'gnn has {self.K} layers. ')
+        print(f'gnn has {self.K} layers ')
                 
         # create rgcn layers
         self.build_model()

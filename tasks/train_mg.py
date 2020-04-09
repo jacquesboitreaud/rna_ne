@@ -33,6 +33,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.join(script_dir,'..'))
     
     from model_mg import RGCN
+    from model import Model
     from tasks_processing.mgDataset import mgDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
@@ -42,11 +43,11 @@ if __name__ == "__main__":
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_annotated_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=300)
-    parser.add_argument("-f","--fr3d", action='store_true', help="Set to true to use original FR3D graphs (baseline)",
-                        default=True)
     
-    parser.add_argument("-e","--embeddings", action='store_true', help="Use pretrained embeddings.",
+    parser.add_argument("-e","--embeddings", action='store_true', help="Initialize with pretrained embeddings.",
                         default=True)
+    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_edgetypes.pth',
+                        help="path to rgcn to warm start embeddings")
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     parser.add_argument('--load_model', type=bool, default=False)
@@ -75,21 +76,25 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     # config
-    if(args.embeddings):
-        feats_dim, h_size, out_size=12, 16, 16 # dims 
-    else:
+    if args.embeddings: # Initialize with pretrained embeddings 
+        
+        init_embeddings = Model(features_dim = 12, h_dim = 16, out_dim = 32, num_rels = 44, radii_params=(1,1,2),
+                           num_bases = 10)
+        init_embeddings.load_state_dict(torch.load(args.pretrain_model_path))
+        print('Loaded RGCN layer to warm-start embeddings')
+        
         feats_dim, h_size, out_size=32, 16, 16 # dims 
+    else:
+        print('Baseline model training, using FR3D graphs and edgetypes')
+        feats_dim, h_size, out_size=12, 16, 16 # dims 
     bases = 10 
     
+    # Weighted loss 
     weights = torch.tensor([1.,100.])
     
     #Loaders
-    if(args.fr3d):
-        print('********** Baseline model training, using FR3D graphs and edgetypes ******')
-    else:
-        print('********** Training model with learned nucleotide embeddings ***********')
     loaders = Loader(path=args.train_dir ,
-                     true_edges=args.fr3d, # Whether we use true FR3D graphs or embeddings graphs 
+                     true_edges= True, # Whether we use true FR3D edgetypes or simplied edgetypes
                      attributes = ['angles', 'identity'],
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
@@ -106,17 +111,15 @@ if __name__ == "__main__":
     
     #Model & hparams
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    parallel=False
+    weights = weights.to(device)
     
     # Simple RGCN instance for node classification 
     model = RGCN(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, num_layers = args.layers, num_bases=bases, pool=False).to(device).float()
-    weights = weights.to(device)
+                  num_rels=N_edge_types, num_layers = args.layers, num_bases=bases).to(device).float()
     
     m=nn.LogSoftmax(dim=1)
     criterion = nn.NLLLoss(weight = weights, reduction = 'sum')
     
-
     if(args.load_model):
         model.load_state_dict(torch.load(args.load_path))
 
@@ -144,6 +147,10 @@ if __name__ == "__main__":
             total_steps+=1 # count training steps
             
             graph=send_graph_to_device(graph,device)
+            
+            # Warm start embeddings 
+            if(args.embeddings):
+                init_embeddings.GNN(graph)
 
             # Forward pass
             h = model(graph)
@@ -200,7 +207,10 @@ if __name__ == "__main__":
             for batch_idx, (graph, pdbids ) in enumerate(test_loader):
 
                 graph=send_graph_to_device(graph,device)
-
+                
+                if(args.embeddings):
+                    init_embeddings(graph)
+                    
                 # Forward pass 
                 h= model(graph) 
                 #h=graph.ndata['h'].view(-1,out_size)

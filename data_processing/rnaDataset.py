@@ -75,6 +75,7 @@ class rnaDataset(Dataset):
         # Wether to keep true edge labels in graph 
         # Build edge map
         self.true_edges=add_true_edges
+        
         if(self.true_edges):
             print('Parsing true FR3D edge types in input graphs...')
             with open('true_edge_map.pickle','rb') as f:
@@ -86,18 +87,19 @@ class rnaDataset(Dataset):
                     print('>>> Edge map and frequencies not found. Parsing the dataset...')
                     self.true_edge_map, self.true_edge_freqs = self._get_edge_data()
                 
-            self.num_true_edge_types = len(self.true_edge_map)
-            print(f"found {self.num_true_edge_types} FR3D edge types, frequencies: {self.true_edge_freqs}")
-        
-        # the simplified edge labels to feed the GNN 
-        self.num_edge_types=3
-        # Edge map with Backbone (0) , stackings (1) and pairs (2)
-        self.edge_map={'B35':0,
-                      'B53':0,
-                      'S33':1,
-                      'S35':1,
-                      'S53':1,
-                      'S55':1}
+            self.num_edge_types = len(self.true_edge_map)
+            print(f"found {self.num_edge_types} FR3D edge types, frequencies: {self.true_edge_freqs}")
+            
+        else:
+            # the simplified edge labels to feed the GNN 
+            self.num_edge_types=3
+            # Edge map with Backbone (0) , stackings (1) and pairs (2)
+            self.edge_map={'B35':0,
+                          'B53':0,
+                          'S33':1,
+                          'S35':1,
+                          'S53':1,
+                          'S55':1}
         
         
     def _get_simple_etype(self,label):
@@ -121,16 +123,15 @@ class rnaDataset(Dataset):
         
         G = nx.to_undirected(G)
         
-        # Add one-hot edge types to features 
-        one_hot = {edge: self._get_simple_etype(label) for edge, label in
+        # Add simplified edge types to features 
+        simple_one_hot = {edge: self._get_simple_etype(label) for edge, label in
        (nx.get_edge_attributes(G, 'label')).items()}
+        nx.set_edge_attributes(G, name='one_hot', values=simple_one_hot)
                 
         if(self.true_edges): # add true edge types 
             true_ET = {edge: torch.tensor(self.true_edge_map[label]) for edge, label in
                    (nx.get_edge_attributes(G, 'label')).items()}
-            
-        nx.set_edge_attributes(G, name='one_hot', values=one_hot)
-        nx.set_edge_attributes(G, name='true_ET', values=true_ET)
+            nx.set_edge_attributes(G, name='true_ET', values=true_ET)
         
         # Create dgl graph
         g_dgl = dgl.DGLGraph()

@@ -42,9 +42,12 @@ if (__name__ == "__main__"):
     parser.add_argument('-i', '--train_dir', help="path to training dataframe", type=str, default='tasks/data/mg_annotated_graphs')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=-1)
-    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_iter_36400.pth')
+    
+    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_edgetypes.pth')
+    
+    
     # Where to save graphs with embeddings
-    parser.add_argument('-o', '--savedir', type=str, default = 'tasks/data/mg_embedded_graphs')
+    parser.add_argument('-o', '--savedir', type=str, default = 'tasks/data/mg_emb_fr3d_graphs')
     parser.add_argument('--batch_size', type=int, default = 16)
     
     ###########
@@ -57,12 +60,14 @@ if (__name__ == "__main__"):
     r1 = 1
     r2= 2
     
+    use_fr3d_edges = True
+    
     #Loaders
     loaders = Loader(path=args.train_dir ,
                      attributes = ['angles', 'identity'],
                      N_graphs=None, 
                      emb_size= feats_dim, 
-                     true_edges=True, # Add the true edge types as an edge feature for validation & clustering
+                     true_edges=use_fr3d_edges,
                      num_workers=0, 
                      batch_size=args.batch_size)
     
@@ -121,7 +126,7 @@ if (__name__ == "__main__"):
                 
                 # Save back our graph with embeddings 
                 with open(os.path.join(args.savedir,gid+'.pickle'),'wb') as f:
-                    pickle.dump(nx_g, f)
+                    pickle.dump(fr3d_g, f)
                 counter +=1
             print(counter, ' graphs embedded')
              

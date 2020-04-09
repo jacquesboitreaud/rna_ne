@@ -36,16 +36,14 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
     parser.add_argument("--cutoff", help="Max number of train graphs. Set to -1 for all in dir", 
-                        type=int, default=-1)
+                        type=int, default=10)
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
-    parser.add_argument('--load_model', type=bool, default=False)
-    parser.add_argument('--load_iter', type=int, default=10000) # Change to load desired model 
     
     parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=4)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -106,20 +104,18 @@ if __name__ == "__main__":
     
     #Model & hparams
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    #device = 'cpu'
+        
     
-    # Model instance contains GNN and context GNN 
-    layers = int(args.r2-args.r1)
-    assert(layers >0 )
     if(simplified_edges):
         b=-1
     else:
         b=num_bases 
+        
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
                   num_rels=N_edge_types, radii_params=(args.K,args.r1, args.r2), num_bases=b).to(device).float()
-
-    if(args.load_model):
-        model.load_state_dict(torch.load(args.load_path))
+    if torch.cuda.device_count() >1 :
+        print('Parallel GPU training')
+        model = nn.DataParallel(model)
 
     #Print model summary
     print(model)
@@ -132,10 +128,7 @@ if __name__ == "__main__":
 
     #Training loop
     model.train()
-    if(args.load_model):
-        total_steps = args.load_iter
-    else:
-        total_steps=0
+    total_steps=0
 
     for epoch in range(1, args.epochs+1):
         print(f'Starting epoch {epoch}')
@@ -160,9 +153,10 @@ if __name__ == "__main__":
             h_v = torch.zeros((batch_size,out_size), device = device)
             for k in range(batch_size):
                 h_v[k] = graphs[k].ndata['h'][u_index[k],:]
-                
-            # If linear transform :
-            if(args.linear_transform):
+            
+            if(parallel):
+                h_v = model.module.linear_tf(h_v)
+            else:
                 h_v = model.linear_tf(h_v)
             
             # Get context embedding : average of anchor nodes             
@@ -198,7 +192,7 @@ if __name__ == "__main__":
                  scheduler.step()
                  print ("learning rate: %.6f" % scheduler.get_lr()[0])
                  
-            #Saving model 
+            #Saving 
             if total_steps % args.save_iter == 0:
                 torch.save( model.state_dict(), f"{args.save_path[:-4]}_iter_{total_steps}.pth")
                 
