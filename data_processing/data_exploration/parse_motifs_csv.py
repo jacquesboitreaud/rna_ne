@@ -24,6 +24,7 @@ for i, row in df.iterrows():
         print(m_name)
         cpt +=1
         motif = m_name
+        rank=0
         
     else:
         
@@ -48,8 +49,12 @@ for i, row in df.iterrows():
                 
                 print(f'pdb {pdb}, mdl {mdl}, chain {chain}, nt {nt}, pos {pos}')
                 
-        # Add pdb, chain, positions to dict 
-        d[pdb]= (motif, chain, positions)
+        # Add pdb, chain, positions to dict
+        if(pdb in d):
+            d[pdb].append((motif, chain, positions, rank))
+        else: d[pdb] = [(motif, chain, positions, rank)]
+        
+        rank += 1 # discrepancy ranking wrt reference motif
         
 print(d)
 

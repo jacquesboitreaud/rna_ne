@@ -39,16 +39,16 @@ if (__name__ == "__main__"):
     
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('-i', '--train_dir', help="path to training dataframe", type=str, default='tasks/data/mg_annotated_graphs')
+    parser.add_argument('-i', '--train_dir', help="path to graphs dataframe", type=str, default='data/motifs_chunks')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=-1)
     
-    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_edgetypes.pth')
+    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_bases_125k.pth')
     
     
     # Where to save graphs with embeddings
-    parser.add_argument('-o', '--savedir', type=str, default = 'tasks/data/mg_emb_fr3d_graphs')
-    parser.add_argument('--batch_size', type=int, default = 16)
+    parser.add_argument('-o', '--savedir', type=str, default = 'data/with_embeddings')
+    parser.add_argument('--batch_size', type=int, default = 1)
     
     ###########
 
@@ -84,7 +84,7 @@ if (__name__ == "__main__"):
     
     # Model instance contains GNN and context GNN 
     model = Model(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
-                  num_rels=N_edge_types, radii_params=(1,r1,r2), num_bases=-1).to(device).float()
+                  num_rels=N_edge_types, radii_params=(1,r1,r2), num_bases=10).to(device).float()
 
     model.load_state_dict(torch.load(args.load_model_path))
 

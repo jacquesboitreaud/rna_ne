@@ -21,28 +21,30 @@ with open('3dmotifs_dict.pickle', 'rb') as f :
     
 for pdb, v in d.items():
     
-    # Open pdb 
     try:
-        g = pickle.load(open(os.path.join(graphs_dir,pdb+'.pickle'), 'rb'))
+        g0 = pickle.load(open(os.path.join(graphs_dir,pdb+'.pickle'), 'rb'))
         
     except:
         #print(pdb , ' not found')
         pass
     
-    # nodes 
-    bads = []
-    for n, data in g.nodes(data=True):
-        pos = data['nucleotide'].pdb_pos
-        
-        if(n[0]!=v[1] or pos not in v[2]):
-            bads.append(n)
+    # nodes
+    # Copy graph for each motif found in it 
+    for i in range(len(v)):
+        g=nx.MultiGraph(g0)
+        bads = []
+        for n, data in g.nodes(data=True):
+            pos = data['nucleotide'].pdb_pos
             
-    g.remove_nodes_from(bads)
-    
-    print(g.number_of_nodes())
-    
-    if(g.number_of_nodes()>0):
+            if(n[0]!=v[i][1] or pos not in v[i][2]):
+                bads.append(n)
+                
+        g.remove_nodes_from(bads)
         
-        with open(os.path.join(write_dir,pdb+'.pickle'), 'wb') as f:
-            pickle.dump(g,f)
-            pickle.dump(v[0],f)
+        print(g.number_of_nodes())
+        
+        if(g.number_of_nodes()>0):
+            
+            with open(os.path.join(write_dir,pdb+'_'+str(i)+'.pickle'), 'wb') as f:
+                pickle.dump(g,f)
+                pickle.dump(v[i][0],f)

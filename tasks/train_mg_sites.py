@@ -32,17 +32,17 @@ if __name__ == "__main__":
     sys.path.append(os.path.join(script_dir,'tasks_processing'))
     sys.path.append(os.path.join(script_dir,'..'))
     
-    from model_mg import RGCN
+    from model_mg_sites import RGCN
     from model import Model
-    from tasks_processing.mgDataset import mgDataset, Loader
+    from tasks_processing.mg_sites_Dataset import mgDataset, Loader
     from data_processing.rna_classes import *
     from utils import *
     
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_annotated_graphs')
+    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/mg_sites')
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
-                        type=int, default=300)
+                        type=int, default=None)
     
     parser.add_argument("-e","--embeddings", action='store_true', help="Initialize with pretrained embeddings.",
                         default=True)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', type=bool, default=False)
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--batch_size', type=int, default=32)
     
     parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
     parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
     
-    parser.add_argument('--log_iter', type=int, default=5) # print loss metrics every _ step
+    parser.add_argument('--log_iter', type=int, default=50) # print loss metrics every _ step
     parser.add_argument('--save_iter', type=int, default=1000) # save model weights every _ step
     
     
@@ -83,14 +83,14 @@ if __name__ == "__main__":
         init_embeddings.load_state_dict(torch.load(args.pretrain_model_path))
         print('Loaded RGCN layer to warm-start embeddings')
         
-        feats_dim, h_size, out_size=32, 16, 16 # dims 
+        feats_dim, h_size, out_size=32, 16, 2 # dims 
     else:
         print('Baseline model training, using FR3D graphs and edgetypes')
         feats_dim, h_size, out_size=12, 16, 16 # dims 
     bases = 10 
     
     # Weighted loss 
-    weights = torch.tensor([1.,10.])
+    weights = torch.tensor([1.,1.])
     
     #Loaders
     loaders = Loader(path=args.train_dir ,
@@ -143,11 +143,12 @@ if __name__ == "__main__":
         train_ep_loss, test_ep_loss = 0,0
         pos_pred = 0
         
-        for batch_idx, (graph, pdbids) in enumerate(train_loader):
+        for batch_idx, (graph, pdbids, labels) in enumerate(train_loader):
 
             total_steps+=1 # count training steps
             
             graph=send_graph_to_device(graph,device)
+            labels = torch.tensor(labels).to(device)
             
             # Warm start embeddings 
             if(args.embeddings):
@@ -155,11 +156,7 @@ if __name__ == "__main__":
 
             # Forward pass
             h = model(graph)
-            #h = graph.ndata['h'].view(-1,out_size)
-            
-            # Get mg labels 
-            labels = graph.ndata['Mg_binding'].long()
-            
+        
             #Compute loss
             t_loss = criterion( m(h), labels)
             optimizer.zero_grad()
@@ -205,18 +202,16 @@ if __name__ == "__main__":
         model.eval()
         pos_pred = 0
         with torch.no_grad():
-            for batch_idx, (graph, pdbids ) in enumerate(test_loader):
+            for batch_idx, (graph, pdbids, labels ) in enumerate(test_loader):
 
                 graph=send_graph_to_device(graph,device)
+                labels = torch.tensor(labels).to(device)
                 
                 if(args.embeddings):
                     init_embeddings.GNN(graph)
                     
                 # Forward pass 
                 h= model(graph) 
-                #h=graph.ndata['h'].view(-1,out_size)
-                
-                labels = graph.ndata['Mg_binding'].long()
             
                 #Compute loss
                 t_loss = criterion( m(h), labels)
