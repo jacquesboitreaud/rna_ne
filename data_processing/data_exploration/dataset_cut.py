@@ -3,6 +3,8 @@
 Created on Mon Mar 30 10:47:13 2020
 
 @author: jacqu
+
+Split all PDBs into a big training set and 10 graphs for validation 
 """
 
 with open('../data/all_nodes.pickle','rb') as f:

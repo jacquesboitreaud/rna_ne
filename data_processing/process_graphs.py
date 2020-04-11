@@ -42,12 +42,11 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     
+    
     parser.add_argument('-hr', "--high_res", help="Use only high resolution PDB structures (406 samples).", 
                         type=bool, default=False)
-    
-    parser.add_argument('-m', "--motifs_only", help=" Parse only graphs with motifs ", 
+    parser.add_argument('-m', "--motifs_only", help=" Parse only graphs in motifs dict ", 
                         type=bool, default=False)
-    
     parser.add_argument('-mg', "--magnesium_only", help=" Parse only graphs with magnesium binding sites ", 
                         type=bool, default=True)
     
@@ -155,14 +154,18 @@ if __name__ == "__main__":
     
                     # Angles : 
                     angles = base_angles(nucleotide, prev_nt, next_nt)
-                    base_normal_vec = norm_base_angles(nucleotide)
+                    
+                    # Optional features : uncomment 
+                    #base_normal_vec = norm_base_angles(nucleotide)
+                    
                     nonzero = np.count_nonzero(angles)
                     if(nonzero<8): # Missing angles 
                         problem_nts.append(n) 
                         
                     # Store in node attributes dict 
                     node_attrs['angles'][n]=angles
-                    node_attrs['base_norm_vec'][n]=base_normal_vec
+                    # Optional : uncomment 
+                    #node_attrs['base_norm_vec'][n]=base_normal_vec
             
             # ========= Create features and check all angles !=0 =============
         
