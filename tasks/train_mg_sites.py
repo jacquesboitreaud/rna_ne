@@ -24,7 +24,9 @@ import torch.nn.utils.clip_grad as clip
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import f1_score, precision_score, recall_score, roc_curve, auc
+
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -49,8 +51,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_edgetypes.pth',
                         help="path to rgcn to warm start embeddings")
     
-    parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
-    parser.add_argument('--load_model', type=bool, default=False)
+    parser.add_argument('--load_model', type=bool, default=True)
     
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=32)
@@ -67,15 +68,14 @@ if __name__ == "__main__":
     parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
     
     parser.add_argument('--log_iter', type=int, default=50) # print loss metrics every _ step
-    parser.add_argument('--save_iter', type=int, default=1000) # save model weights every _ step
     
-    
-
      # =======
 
     args=parser.parse_args()
 
     # config
+    attributes = ['angles','identity']
+    
     if args.embeddings: # Initialize with pretrained embeddings 
         
         init_embeddings = Model(features_dim = 12, h_dim = 16, out_dim = 32, num_rels = 44, radii_params=(1,1,2),
@@ -86,7 +86,23 @@ if __name__ == "__main__":
         feats_dim, h_size, out_size=32, 16, 2 # dims 
     else:
         print('Baseline model training, using FR3D graphs and edgetypes')
-        feats_dim, h_size, out_size=12, 16, 16 # dims 
+        
+        if( attributes == ['angles', 'identity']):
+            feats_dim, h_size, out_size=12, 16, 2 # dims 
+        elif 'angles' in attributes :
+            feats_dim, h_size, out_size=8, 16, 2 # dims 
+        else:
+            feats_dim, h_size, out_size=4, 16, 2  # dims 
+            
+    # Define saved model name : 
+    if args.embeddings : 
+        name = 'warmstart_mg'
+    elif 'angles' in attributes : 
+        name = 'fr3d_angles_mg'
+    else:
+        name = 'fr3d_basic_mg'
+    save_path = f'saved_model_w/{name}.pth'
+            
     bases = 10 
     
     # Weighted loss 
@@ -95,7 +111,7 @@ if __name__ == "__main__":
     #Loaders
     loaders = Loader(path=args.train_dir ,
                      true_edges= True, # Whether we use true FR3D edgetypes or simplied edgetypes
-                     attributes = ['angles', 'identity'],
+                     attributes = attributes,
                      N_graphs=args.cutoff, 
                      emb_size= feats_dim, 
                      num_workers=args.num_processes, 
@@ -116,13 +132,13 @@ if __name__ == "__main__":
     # Simple RGCN instance for node classification 
     model = RGCN(features_dim=feats_dim, h_dim=h_size, out_dim=out_size, 
                   num_rels=N_edge_types, num_layers = args.layers, num_bases=bases).to(device).float()
-    init_embeddings.to(device)
+    if(args.embeddings):
+        init_embeddings.to(device)
+    if args.load_model:
+        model.load_state_dict(torch.load(save_path))
     
     m=nn.LogSoftmax(dim=1)
     criterion = nn.NLLLoss(weight = weights, reduction = 'sum')
-    
-    if(args.load_model):
-        model.load_state_dict(torch.load(args.load_path))
 
     #Print model summary
     print(model)
@@ -136,6 +152,7 @@ if __name__ == "__main__":
     #Train & test
     model.train()
     total_steps=0 # nbr of optim steps 
+    best_before = 1e5
 
     for epoch in range(1, args.epochs+1):
         print('*********************************')
@@ -178,6 +195,9 @@ if __name__ == "__main__":
             if total_steps % args.log_iter == 0:
 
                 writer.add_scalar('batchLoss/train', t_loss.item()  , total_steps)
+                writer.add_scalar('precision/train', p , total_steps)
+                writer.add_scalar('recall/train', r  , total_steps)
+                writer.add_scalar('f1/train', f1  , total_steps)
                 print('epoch {}, opt. step n°{}, loss {:.2f}'.format(epoch, total_steps, t_loss.item()))
                 print(f'precision: {p}, recall: {r}, f1-score: {f1}')
             
@@ -189,10 +209,6 @@ if __name__ == "__main__":
             if total_steps % args.anneal_iter == 0:
                  scheduler.step()
                  print ("learning rate: %.6f" % scheduler.get_lr()[0])
-                 
-            #Saving model 
-            if total_steps % args.save_iter == 0:
-                torch.save( model.state_dict(), f"{args.save_path[:-4]}_iter_{total_steps}.pth")
         
         print(f'epoch {epoch}, loss : {train_ep_loss}, N positive pred : {pos_pred}')
         # Epoch logging 
@@ -201,6 +217,9 @@ if __name__ == "__main__":
         # Validation pass
         model.eval()
         pos_pred = 0
+        
+        test_true, test_pred, scores = [],[], []
+        
         with torch.no_grad():
             for batch_idx, (graph, pdbids, labels ) in enumerate(test_loader):
 
@@ -219,13 +238,23 @@ if __name__ == "__main__":
                 
                 # Epoch accuracy 
                 _, pred = torch.max(m(h), dim=1)
+                score_pos = m(h)[:,1].cpu().detach().numpy() # proba of label 1 
                 pos_pred += torch.sum(pred).float()
                 
                 # Confusion matrix : 
                 true, pred = labels.cpu().detach(), pred.cpu().detach()
-                p = precision_score(true, pred)   
-                r = recall_score(true, pred)   
-                f1 = 2*(p*r)/(p+r)
+                
+                test_true.append(true)
+                test_pred.append(pred)
+                scores.append(score_pos)
+                
+                
+            truth, preds = np.concatenate(test_true), np.concatenate(test_pred)
+            scores = np.concatenate(scores)
+            
+            p = precision_score(truth, preds)   
+            r = recall_score(truth, preds)   
+            f1 = 2*(p*r)/(p+r)
             
             print('*************** Validation pass *********************')
             print(f'epoch {epoch}, Validation loss : {test_ep_loss}, N positive pred : {pos_pred}')
@@ -234,3 +263,20 @@ if __name__ == "__main__":
         # Epoch logging
         writer.add_scalar('epochLoss/test', test_ep_loss, epoch)
         
+        writer.add_scalar('precision/test', p , total_steps)
+        writer.add_scalar('recall/test', r  , total_steps)
+        writer.add_scalar('f1/test', f1  , total_steps)
+        
+        
+        # If better test loss
+        
+        if test_ep_loss < best_before :
+            best_before = test_ep_loss
+            print('valid loss decreased. saving.')
+            
+            #Saving model 
+            torch.save( model.state_dict(), save_path)
+            
+            with open(f'{name}.pickle', 'wb') as f : 
+                pickle.dump(truth,f)
+                pickle.dump(scores,f)

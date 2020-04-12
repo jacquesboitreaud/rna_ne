@@ -140,8 +140,14 @@ class mgDataset(Dataset):
                                 node_attrs = self.attributes)
         
         # Init node embeddings with nodes features
-        floatid = g_dgl.ndata['identity'].float()
-        g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['angles'], floatid], dim = 1)
+        if('angles' in self.attributes and 'identity' in self.attributes):
+            floatid = g_dgl.ndata['identity'].float()
+            g_dgl.ndata['h'] = torch.cat([g_dgl.ndata['angles'], floatid], dim = 1)
+        elif 'angles' in self.attributes : 
+            g_dgl.ndata['h'] = g_dgl.ndata['angles']
+        elif 'identity' in self.attributes : 
+            floatid = g_dgl.ndata['identity'].float()
+            g_dgl.ndata['h']=floatid
         
         # Return pair graph, pdb_id
         return g_dgl, pdb, label
