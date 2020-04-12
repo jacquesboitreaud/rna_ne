@@ -74,6 +74,8 @@ if __name__ == "__main__":
     num_bases = 10 # nbr of bases for edges if 'all' edges used 
     simplified_edges = bool(args.edgetypes=='simplified')
     
+    parallel = False
+    
     # Train_dir 
     if(not args.debug):
         train_nodes = pickle.load(open('data_processing/train_nodes.pickle','rb'))
