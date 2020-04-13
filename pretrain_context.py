@@ -41,10 +41,10 @@ if __name__ == "__main__":
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     
-    parser.add_argument('-p', '--num_processes', type=int, default=128) # Number of loader processes
+    parser.add_argument('-p', '--num_processes', type=int, default=12) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=12)
+    parser.add_argument('--batch_size', type=int, default=128)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # Input graphs params: use simplified edges or use all edges  
     parser.add_argument('-e', '--edgetypes', type=str, default='all') # 'simplified or 'all'
 
-    parser.add_argument('--lr', type=float, default=2e-3) # Initial learning rate
+    parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
 
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
