@@ -54,6 +54,7 @@ class pretrainDataset(Dataset):
     """
     def __init__(self, graphs_path,
                  nodes_dict,
+                 structures,
                  N_graphs,
                  emb_size,
                  radii_params,
@@ -70,10 +71,12 @@ class pretrainDataset(Dataset):
         self.path = graphs_path
         self.nodes_dict = nodes_dict 
         
-        if(N_graphs!=None):
+        if(N_graphs!=None and nodes_dict !=None):
             self.all_graphs = sorted(self.nodes_dict)[:N_graphs] # Cutoff number
-        else:
+        elif self.nodes_dict !=None:
             self.all_graphs = sorted(self.nodes_dict)
+        else: 
+            self.all_graphs = structures
             
         self.n_graphs=len(self.all_graphs)
         
@@ -129,11 +132,12 @@ class pretrainDataset(Dataset):
         
         # pick a graph  and node at random 
         gid = random.choice(self.all_graphs)
-        u = random.choice(self.nodes_dict[gid])
         
         with open(os.path.join(self.path, gid),'rb') as f:
             G = pickle.load(f)
         G.to_undirected() # Undirected graph
+        
+        u = random.choice(list(G.nodes()))
         
         # Random sample positive or negative context 'deterministic but 'idx' unused elsewhere
         r = int(idx%2==0)
@@ -155,10 +159,12 @@ class pretrainDataset(Dataset):
         else:
             # Random sampling of node and graph 
             ngid = random.choice(self.all_graphs)
-            u_neg = random.choice(self.nodes_dict[ngid])
+
             with open(os.path.join(self.path, ngid),'rb') as f:
                 G_ctx = pickle.load(f)
             G_ctx = nx.to_undirected(G_ctx)
+            
+            u_neg = random.choice(list(G_ctx.nodes()))
             
             assert(not G_ctx.is_directed())
             
@@ -257,6 +263,7 @@ class Loader():
     def __init__(self,
                  path,
                  nodes_dict,
+                 structures,
                  N_graphs,
                  emb_size,
                  radii_params, 
@@ -276,6 +283,7 @@ class Loader():
         self.num_workers = num_workers
         self.dataset = pretrainDataset(graphs_path=path, 
                                        nodes_dict = nodes_dict ,
+                                       structures = structures, 
                                   N_graphs= N_graphs,
                                   emb_size=emb_size,
                                   radii_params = radii_params,

@@ -48,21 +48,21 @@ if __name__ == "__main__":
     
     parser.add_argument("-e","--embeddings", action='store_true', help="Initialize with pretrained embeddings.",
                         default=True)
-    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_edgetypes.pth',
+    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_bases.pth',
                         help="path to rgcn to warm start embeddings")
     
-    parser.add_argument('--load_model', type=bool, default=True)
+    parser.add_argument('--load_model', type=bool, default=False)
     
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=32)
     
     parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
 
-    parser.add_argument('--layers', type=int, default=2) # nbr of layers in RGCN 
+    parser.add_argument('--layers', type=int, default=1) # nbr of layers in RGCN 
     parser.add_argument('--edge_map', type=str, help='precomputed edge map for one-hot encoding. Set to None to rebuild. ', 
                         default = 'mg_edge_map.pickle')
 
-    parser.add_argument('--lr', type=float, default=1e-4) # Initial learning rate
+    parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
     parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
     parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
@@ -74,16 +74,16 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     # config
-    attributes = ['angles','identity']
+    attributes = ['angles','identity'] # node features to use
     
     if args.embeddings: # Initialize with pretrained embeddings 
         
         init_embeddings = Model(features_dim = 12, h_dim = 16, out_dim = 32, num_rels = 44, radii_params=(1,1,2),
-                           num_bases =-1)
+                           num_bases =10)
         init_embeddings.load_state_dict(torch.load(args.pretrain_model_path))
         print('Loaded RGCN layer to warm-start embeddings')
         
-        feats_dim, h_size, out_size=32, 16, 2 # dims 
+        feats_dim, h_size, out_size=32, 16, 16 # dims 
     else:
         print('Baseline model training, using FR3D graphs and edgetypes')
         

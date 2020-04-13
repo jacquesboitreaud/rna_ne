@@ -39,7 +39,7 @@ if __name__ == "__main__":
                         help="path to rgcn to warm start embeddings")
     
     parser.add_argument('--edge_map', type=str, help='precomputed edge map for one-hot encoding. Set to None to rebuild. ', 
-                        default = '../true_edge_map.pickle')
+                        default = '../fr3d_edge_map.pickle')
     
      # =======
 
@@ -78,8 +78,11 @@ if __name__ == "__main__":
     print(w_comp[i2])
     
     d = pairwise_distances(w_comp, metric = 'l2')
+    labels = list(edge_map.keys())
     # heatmap
-    sns.heatmap(d)
+    mask = np.zeros_like(d)
+    mask[np.triu_indices_from(mask)] = True
+    sns.heatmap(d, xticklabels = labels, yticklabels = labels, vmin = 0, vmax=0.5, mask = mask )
     
     print(f'cosine dist between {e1} and {e2}: {d[i1,i2]}')
     

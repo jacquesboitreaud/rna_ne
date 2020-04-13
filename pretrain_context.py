@@ -34,16 +34,17 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks')
+    parser.add_argument('--train_dir', help="path to training dataframe", type=str, default='data/chunks_HR')
     parser.add_argument("--cutoff", help="Max number of train graphs. Set to -1 for all in dir", 
                         type=int, default=-1)
+    parser.add_argument('--high_res', action='store_true', default=True) # train on 400 high res structures 
     
     parser.add_argument('--save_path', type=str, default = 'saved_model_w/model0.pth')
     
-    parser.add_argument('-p', '--num_processes', type=int, default=12) # Number of loader processes
+    parser.add_argument('-p', '--num_processes', type=int, default=128) # Number of loader processes
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=12)
     
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--fix_seed', action='store_true', default=False)
@@ -76,17 +77,19 @@ if __name__ == "__main__":
     
     parallel = False
     
-    # Train_dir 
-    if(not args.debug):
+    # Train directory and nodes : high resolution structures only (400)
+    if(not args.high_res):
         train_nodes = pickle.load(open('data_processing/train_nodes.pickle','rb'))
     else:
-        train_nodes = pickle.load(open('data_processing/debug_nodes.pickle','rb'))
+        hr_structures = os.listdir('data/chunks_HR')
+        print(f'>>> Pretraining on {len(hr_structures)} pdb structures')
         
 
     
     #Loaders
     loaders = Loader(path = args.train_dir,
-                    nodes_dict=train_nodes ,
+                    nodes_dict=None ,
+                    structures = hr_structures, 
                      simplified_edges=simplified_edges,
                      radii_params=(args.K,args.r1, args.r2),
                      attributes = ['angles', 'identity'],

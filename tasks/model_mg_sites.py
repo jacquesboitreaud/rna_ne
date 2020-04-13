@@ -69,7 +69,9 @@ class RGCN(nn.Module):
         for layer in self.layers:
              g.ndata['h']=layer(g,g.ndata['h'],g.edata['one_hot'])
              
-        return self.pooling_layer(g,g.ndata['h'])
+        h = self.pooling_layer(g,g.ndata['h'])
+        
+        return self.linear(h)
 
         
 def draw_rec( prod, label, title = ''):

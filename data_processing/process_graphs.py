@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--write_dir', help="path to directory to write preprocessed graphs ", 
                         type=str, default="../data/chunks")
     
+    # To process a specific subset of graphs
     
     parser.add_argument('-hr', "--high_res", help="Use only high resolution PDB structures (406 samples).", 
                         type=bool, default=False)
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     gr_dir = args.graphs_dir
     annot_dir = args.write_dir
     
+    # To process a specific subset of graphs
     if(args.high_res):
         high_res_struc = pickle.load(open('data_exploration/high_res_pdb.pickle','rb'))
         selected = high_res_struc
