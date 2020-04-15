@@ -85,7 +85,6 @@ if __name__ == "__main__":
         print(f'>>> Pretraining on {len(hr_structures)} pdb structures')
         
 
-    
     #Loaders
     loaders = Loader(path = args.train_dir,
                     nodes_dict=None ,

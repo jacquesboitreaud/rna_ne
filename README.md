@@ -33,9 +33,4 @@ python embeddings.py -i [directory] -o [write_directory]
 
 An example of how to use a saved model to warm-start embeddings with the pretrained embeddings is given in tasks/train_mg.py
 
-## Visualize learned embeddings for different basepair types 
 
-To view embeddings in PCA space, colored by true basepair type, run :
-```
-python post/visualize_embeddings.py 
-```

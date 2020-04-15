@@ -7,8 +7,7 @@ Created on Sat Mar  7 16:50:14 2020
 Load graphs with embeddings,
 visualize node embeddings for occurences of 3D motifs : 
     
-The goal is to see if we can see isomorphic nodes in motif occurences by just looking at their embeddings 
-    
+Compute fitting distance for motif occurrences, for different number of base differences. 
 """
 
 import pickle
@@ -54,7 +53,7 @@ if __name__ == '__main__':
     refs_emb_dict = {} # reference embedding dict, keyed by motif. values are tuple (pdbid, embedding tensor)
     
     
-    diffs={0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[]}
+    diffs={}
     
     for gid in graphs:
         
