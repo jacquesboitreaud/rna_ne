@@ -43,7 +43,7 @@ if (__name__ == "__main__"):
     parser.add_argument("--cutoff", help="Max number of train samples. Set to -1 for all in dir", 
                         type=int, default=-1)
     
-    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_bases_125k.pth')
+    parser.add_argument('--load_model_path', type=str, default = 'saved_model_w/model0_HR.pth')
     
     
     # Where to save graphs with embeddings

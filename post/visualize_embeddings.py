@@ -40,7 +40,7 @@ if __name__ == '__main__':
     with open('../data/true_edge_map.pickle','rb') as f:
         edgemap = pickle.load(f)
     
-    etypes = {l:t for (t,l) in loaders.dataset.true_edge_map.items()}
+    etypes = {l:t for (t,l) in loaders.dataset.edge_map.items()}
     # Dict to collect embeddings, per edge type 
     d= {l:[] for l in etypes.values()}
     cpt = 0 # nbr of nodes read 
@@ -62,8 +62,7 @@ if __name__ == '__main__':
             
     
         for (u,v, data) in g.edges(data=True):
-            eid = data['true_ET'].item()
-            etype = etypes[eid]
+            etype = data['label']
             
             if(etype in b):
                 continue
@@ -99,15 +98,12 @@ if __name__ == '__main__':
     # plot 
     
     for etype, indexes in d.items():
-        if(etype in stackings):
+        if( '1BPH' in etype):
             subtype = x2d[indexes,:]
             sns.scatterplot(subtype[:,0], subtype[:,1], color='g')
-        if(etype in canonical):
+        if('0BPH' in etype):
             subtype = x2d[indexes,:]
             sns.scatterplot(subtype[:,0], subtype[:,1], color='b')
-        if(etype in nc):
-            subtype = x2d[indexes,:]
-            sns.scatterplot(subtype[:,0], subtype[:,1], color='r')
             
 s= silhouette_score(embeddings, labels, metric='l2')
 print('silhouette score ', s)

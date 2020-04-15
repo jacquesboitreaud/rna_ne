@@ -45,7 +45,7 @@ class RGCN(nn.Module):
         if(self.num_layers==1):
             i2h = RelGraphConv(self.features_dim, self.out_dim, self.num_rels) #, activation=nn.ReLU())
         else:
-            i2h = RelGraphConv(self.features_dim, self.h_dim, self.num_rels, activation=nn.ReLU())
+            i2h = RelGraphConv(self.features_dim, self.h_dim, self.num_rels, activation=nn.ReLU(), dropout = 0.1)
         self.layers.append(i2h)
         
         # hidden to hidden
@@ -55,7 +55,7 @@ class RGCN(nn.Module):
                 self.layers.append(h2h)
         # hidden to output
         if(self.num_layers>=2):
-            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels, activation=nn.ReLU())
+            h2o = RelGraphConv(self.h_dim, self.out_dim, self.num_rels, activation=nn.ReLU(), dropout = 0.1)
             self.layers.append(h2o)
             
         self.linear=nn.Linear(self.out_dim, 2) # for softmax 

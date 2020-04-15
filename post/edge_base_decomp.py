@@ -6,7 +6,11 @@ Created on Wed Nov  6 18:44:04 2019
 
 Magnesium binding with pretrained embeddings 
 
-Investigate learned edges representations in context pred RGCN 
+Investigate learned edges representations in context pred RGCN :
+    
+    for all pairs of edgetypes (r1, r2), compute pairwise distances between W_r1 and W_r2. 
+    
+    The more similar the weights, the more these edgetypes appear in similar contexts.
 
 """
 
@@ -35,7 +39,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_bases.pth',
+    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_HR.pth',
                         help="path to rgcn to warm start embeddings")
     
     parser.add_argument('--edge_map', type=str, help='precomputed edge map for one-hot encoding. Set to None to rebuild. ', 
@@ -70,23 +74,31 @@ if __name__ == "__main__":
     w_comp = init_embeddings.GNN.layers[0].w_comp
     w_comp=w_comp.detach().numpy()
     
+    """
     e1 = '9BR'
     e2 = 'TSW'
-    
     i1, i2 = edge_map[e1] , edge_map[e2]
     print(w_comp[i1])
     print(w_comp[i2])
+    """
     
-    d = pairwise_distances(w_comp, metric = 'l2')
-    labels = list(edge_map.keys())
+    d = pairwise_distances(w_comp, metric = 'cosine')
+    
+    # FUll distances matrix reordered
+    d, labels = reordered(d, edge_map)
     # heatmap
     mask = np.zeros_like(d)
     mask[np.triu_indices_from(mask)] = True
-    sns.heatmap(d, xticklabels = labels, yticklabels = labels, vmin = 0, vmax=0.5, mask = mask )
+    sns.heatmap(d, xticklabels = labels, yticklabels = labels, vmin = 0, vmax=0.6, mask = mask )
     
-    print(f'cosine dist between {e1} and {e2}: {d[i1,i2]}')
-    
-    # hierarchical cLustering 
+    # Small distances matrix reordered 
+    d,labels = select_NC(d,edge_map)
+    mask = np.zeros_like(d)
+    mask[np.triu_indices_from(mask)] = True
+    # heatmap
+    plt.figure()
+    sns.heatmap(d, xticklabels = labels, yticklabels = labels, vmin = 0, vmax=0.6, mask=mask)
+
     
     
         

@@ -48,24 +48,24 @@ if __name__ == "__main__":
     
     parser.add_argument("-e","--embeddings", action='store_true', help="Initialize with pretrained embeddings.",
                         default=True)
-    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_bases.pth',
+    parser.add_argument('-m', '--pretrain_model_path', type=str, default = '../saved_model_w/model0_HR.pth',
                         help="path to rgcn to warm start embeddings")
     
     parser.add_argument('--load_model', type=bool, default=False)
     
     parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=64)
     
     parser.add_argument('-p', '--num_processes', type=int, default=4) # Number of loader processes
 
-    parser.add_argument('--layers', type=int, default=1) # nbr of layers in RGCN 
+    parser.add_argument('--layers', type=int, default=2) # nbr of layers in RGCN 
     parser.add_argument('--edge_map', type=str, help='precomputed edge map for one-hot encoding. Set to None to rebuild. ', 
                         default = 'mg_edge_map.pickle')
 
-    parser.add_argument('--lr', type=float, default=1e-3) # Initial learning rate
+    parser.add_argument('--lr', type=float, default=6e-4) # Initial learning rate
     parser.add_argument('--clip_norm', type=float, default=50.0) # Gradient clipping max norm
-    parser.add_argument('--anneal_rate', type=float, default=0.9) # Learning rate annealing
-    parser.add_argument('--anneal_iter', type=int, default=1000) # update learning rate every _ step
+    parser.add_argument('--anneal_rate', type=float, default=0.8) # Learning rate annealing
+    parser.add_argument('--anneal_iter', type=int, default=400) # update learning rate every _ step
     
     parser.add_argument('--log_iter', type=int, default=50) # print loss metrics every _ step
     
@@ -277,6 +277,6 @@ if __name__ == "__main__":
             #Saving model 
             torch.save( model.state_dict(), save_path)
             
-            with open(f'{name}.pickle', 'wb') as f : 
-                pickle.dump(truth,f)
-                pickle.dump(scores,f)
+        with open(f'{name}.pickle', 'wb') as f : 
+            pickle.dump(truth,f)
+            pickle.dump(scores,f)
